@@ -80,9 +80,9 @@ npm install
 npm run dev
 ```
 
----
+<!-- --- -->
 
-## 📌 API Endpoints (Backend)
+<!-- ## 📌 API Endpoints (Backend)
 
 | Method | Endpoint                                      | Description                   |
 |--------|-----------------------------------------------|-------------------------------|
@@ -98,8 +98,7 @@ npm run dev
 
 | 📋 Sections & Tasks |
 |---------------------|
-| _Add your screenshot here_ |
-
+|![alt text](image.png)| -->
 ---
 
 ## 🤝 Contributing
