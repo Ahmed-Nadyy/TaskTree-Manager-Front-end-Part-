@@ -15,7 +15,7 @@ export default function App() {
           <Route path="/dashboard" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/task/:userId/:sectionId/:taskId" element={<TaskDetails />} /> {/* Dynamic Route */}
+          <Route path="/task/:userId/:sectionId/:taskId" element={<TaskDetails />} />
           <Route path="*" element={<div>Page Not Found</div>} /> {/* Catch-all route */}
         </Routes>
       </div>

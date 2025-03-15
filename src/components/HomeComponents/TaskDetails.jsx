@@ -123,7 +123,7 @@ export default function TaskDetails() {
                         <h1 className="text-4xl font-extrabold text-blue-700">
                             {taskName} Details
                         </h1>
-                        <div className="mt-4 flex items-center gap-3">
+                        <div className="mt-4 flex sm:flex-row flex-col items-center gap-3">
                             <input
                                 className="flex-grow border-2 border-blue-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 type="text"
