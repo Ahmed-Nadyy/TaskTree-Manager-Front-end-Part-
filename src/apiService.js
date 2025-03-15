@@ -1,0 +1,192 @@
+    import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+const apiClient = axios.create({
+    baseURL: API_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    withCredentials: true, 
+}); 
+
+export const registerUser = async (userData) => {
+    console.log(API_URL);
+    const response = await apiClient.post('/auth/register', userData);
+    return response.data;
+};
+
+export const loginUser = async (credentials) => {
+    const response = await apiClient.post('/auth/login', credentials);
+    return response.data;
+};
+
+export const getSections = async (userId) => {
+    try {
+        const response = await apiClient.get(`/sections/${userId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching sections:', error);
+        throw new Error('Failed to fetch sections');
+    }
+};
+
+export const addSection = async (sectionData) => {
+    try {
+        const response = await apiClient.post('/sections', sectionData);
+        return response.data;
+    } catch (error) {
+        console.error('Error adding section:', error);
+        throw new Error('Failed to add section');
+    }
+};
+
+export const addTask = async (sectionId, taskData) => {
+    try {
+        const response = await apiClient.post(`/tasks/${sectionId}`, taskData);
+        return response.data;
+    } catch (error) {
+        console.error('Error adding task:', error);
+        throw new Error('Failed to add task');
+    }
+};
+
+export const deleteSection = async (sectionId) => {
+    try {
+        const response = await apiClient.delete(`/sections/${sectionId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting section:', error);
+        throw new Error('Failed to delete section');
+    }
+};
+
+export const logoutUser = async () => {
+    const response = await apiClient.post('/auth/logout');
+    return response.data; 
+};
+
+export const verifyToken = async () => {
+    try {
+        const token = localStorage.getItem('authToken'); 
+        if (!token) {
+            throw new Error("No token found");
+        }
+
+        const response = await apiClient.get('/auth/verify', {
+            headers: {
+                Authorization: `Bearer ${token}`, // Send the token in the header
+            },
+        });
+
+        console.log(response);
+        return response.data;
+    } catch (error) {
+        console.error("Token verification failed:", error);
+        throw error;
+    }
+};
+
+export const updateTask = async (taskId, updates) => {
+    try {
+        const response = await apiClient.put(`/tasks/${taskId}`, updates);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating task:', error);
+        throw new Error('Failed to update task');
+    }
+};
+
+export const refreshToken = async () => {
+    try {
+        const response = await apiClient.get('/auth/refresh');
+        return response.data.accessToken;
+    } catch (error) {
+        console.error("Token refresh failed:", error);
+        throw error;
+    }
+};
+    
+export const deleteTask = async (sectionId, taskId) => {
+    try {
+        const response = await apiClient.delete(`/tasks/${sectionId}/${taskId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting task:', error);
+        throw new Error('Failed to delete task');
+    }
+};
+
+export const addSubTask = async (sectionId, taskId, subTaskData) => {
+    try {
+        const response = await apiClient.post(`/subtasks/${sectionId}/${taskId}`, subTaskData);
+        return response.data;
+    } catch (error) {
+        console.error('Error adding subtask:', error);
+        throw new Error('Failed to add subtask');
+    }
+};
+
+export const updateSubTask = async (sectionId, taskId, subTaskId, updates) => {
+    try {
+        const response = await apiClient.put(`/subtasks/${sectionId}/${taskId}/${subTaskId}`, updates);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating subtask:', error);
+        throw new Error('Failed to update subtask');
+    }
+};
+
+export const deleteSubTask = async (sectionId, taskId, subTaskId) => {
+    try {
+        const response = await apiClient.delete(`/subtasks/${sectionId}/${taskId}/${subTaskId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting subtask:', error);
+        throw new Error('Failed to delete subtask');
+    }
+};
+
+// Mark Task as Done
+export const markTaskAsDone = async (sectionId, taskId) => {
+    console.log("Marking task as done:", sectionId, taskId);
+    try {
+        const response = await apiClient.put(`/tasks/${sectionId}/${taskId}/done`);
+        return response.data;
+    } catch (error) {
+        console.error('Error marking task as done:', error);
+        throw new Error('Failed to mark task as done');
+    }
+};
+
+// Mark SubTask as Done
+export const markSubTaskAsDone = async (sectionId, taskId, subTaskId) => {
+    console.log("Marking subtask as done:", sectionId, taskId, subTaskId);
+    try {
+        const response = await apiClient.put(`/subtasks/${sectionId}/${taskId}/${subTaskId}/done`);
+        return response.data;
+    } catch (error) {
+        console.error('Error marking subtask as done:', error);
+        throw new Error('Failed to mark subtask as done');
+    }
+};
+
+
+    
+apiClient.interceptors.response.use(
+    response => response,
+    async error => {
+        const originalRequest = error.config;
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+            try {
+                const newAccessToken = await refreshToken();
+                originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+                return apiClient(originalRequest);
+            } catch (refreshError) {
+                console.error("Token refresh failed:", refreshError);
+            }
+        }
+        return Promise.reject(error);
+    }
+);
