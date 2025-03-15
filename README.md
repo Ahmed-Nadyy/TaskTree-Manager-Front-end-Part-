@@ -1,7 +1,7 @@
 
-# ✅ TaskFlow - Task & Subtask Management App
+# ✅ TaskTree - Task & Subtask Management App
 
-**TaskFlow** is a full-stack task management application that helps users organize tasks, subtasks, and sections with ease. It provides intuitive controls for managing task completion, progress tracking, and allows seamless user interaction with a clean UI.
+**TaskTree** is a full-stack task management application that helps users organize tasks, subtasks, and sections with ease. It provides intuitive controls for managing task completion, progress tracking, and allows seamless user interaction with a clean UI.
 
 ---
 
@@ -52,8 +52,8 @@
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/taskflow.git
-cd taskflow
+git clone https://github.com/Ahmed-Nadyy/TaskTree-Manager-Front-end-Part-.git
+cd tasktree
 ```
 
 ### 2. Setup Backend
@@ -121,4 +121,5 @@ This project is **open-source** and available under the [MIT License](LICENSE).
 ## 🙌 Author
 - **Ahmed Nady**
 - GitHub: [@Ahmed-Nadyy](https://github.com/Ahmed-Nadyy)
-- LinkedIn: _Add your LinkedIn URL_
+- LinkedIn: [www.linkedin.com/in/ahmed-nadyy](https://www.linkedin.com/in/ahmed-nadyy)
+
