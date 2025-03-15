@@ -5,7 +5,6 @@ import ProtectedRoute from '../../components/ProtectedRoute.jsx';
 import TaskCard from '../../components/HomeComponents/TaskCard.jsx';
 import Navbar from '../../components/Navbar/Navbar.jsx';
 import { notification } from 'antd';
-import { Navigate, useNavigate } from "react-router-dom";
 
 export default function Home() {
     const [sections, setSections] = useState([]);
@@ -15,7 +14,6 @@ export default function Home() {
     const [newSec, setNewSec] = useState({ name: "" });
     const [newTask, setNewTask] = useState({ name: "", description: "" });
 
-    const navigate = useNavigate();
 
     const { isAuthenticated, user, token } = useSelector((state) => state.auth);
 
