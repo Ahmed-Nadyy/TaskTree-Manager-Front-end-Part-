@@ -132,7 +132,7 @@ export default function TaskDetails() {
                                 onChange={(e) => setNewSubTask(e.target.value)}
                             />
                             <button
-                                className="bg-blue-500 text-white font-medium px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+                                className="bg-blue-500 sm:text-lg text-xs text-white font-medium px-4 py-2 rounded-lg hover:bg-blue-600 transition"
                                 onClick={handleAddSubTask}
                             >
                                 Add SubTask

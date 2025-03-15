@@ -12,11 +12,11 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                         } shadow-md p-4 rounded-md hover:shadow-lg transition`}
                     onClick={() => { console.log(task._id, section._id); }}
                 >
-                    <div className="flex justify-between">
-                        <h2 className="text-xl font-semibold text-gray-800">{task.name}</h2>
+                    <div className="flex justify-between sm:mb-0 mb-3">
+                        <h2 className="sm:text-xl text-lg font-semibold text-gray-800">{task.name}</h2>
                         <span className="flex items-center justify-center gap-4" >
-                            <label className=" cursor-pointer">
-                                is done?
+                            <label className="flex cursor-pointer">
+                                done?
                                 <input
                                     type="checkbox"
                                     className="ml-2"

@@ -203,8 +203,8 @@ export default function Home() {
                         {sections.map((section) => (
                             <div key={section._id} className="block mt-8">
                                 <div className="flex gap-4 justify-center items-center ml-4">
-                                    <h2 className="text-lg font-bold mb-4 min-w-[100px]">{section.name}</h2>
-                                    <div className="w-[100%] h-0.5 bg-[#111827]"></div>
+                                    <h2 className="sm:text-lg font-bold mb-4 min-w-[100px]">{section.name}</h2>
+                                    <div className="sm:w-[100%] w-[80%] h-0.5 bg-[#111827]"></div>
                                 </div>
                                 <button
                                     type="button"
