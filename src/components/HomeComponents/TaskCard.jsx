@@ -30,12 +30,12 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                 />
                             </label>
                             {/* Update Task Button */}
-                            <button
+                            {/* <button
                                 onClick={() => handleUpdateTask(task)}
                                 className=" text-blue-500 hover:underline"
                             >
                                 <FontAwesomeIcon icon={faPenNib} />
-                            </button>
+                            </button> */}
                             {/* Delete Task Button */}
                             <button
                                 onClick={() => handleDeleteTask(task._id, section._id)}
