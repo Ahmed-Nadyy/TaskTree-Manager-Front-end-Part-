@@ -48,9 +48,9 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                     <p className="text-gray-600">{task.description}</p>
                     <a
                         href={`/task/${userId}/${section._id}/${task._id}`}
-                        className="text-blue-500 hover:underline mt-2 block"
+                        className="text-white hover:underline mt-2 block bg-gray-800 text-center rounded-lg py-1 px-3 w-fit"
                     >
-                        View Task
+                        Subtasks
                     </a>
 
 
