@@ -6,6 +6,19 @@ import TaskCard from '../../components/HomeComponents/TaskCard.jsx';
 import Navbar from '../../components/Navbar/Navbar.jsx';
 import { notification } from 'antd';
 
+// Add custom animation styles
+const animationStyles = `
+  @keyframes pulse-slow {
+    0% { box-shadow: 0 0 0 0 rgba(17, 24, 39, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(17, 24, 39, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(17, 24, 39, 0); }
+  }
+  .animate-pulse-slow {
+    animation: pulse-slow 2s infinite;
+  }
+`;
+
+
 export default function Home() {
     const [sections, setSections] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,6 +26,14 @@ export default function Home() {
     const [sectionClicked, setSectionClicked] = useState(null);
     const [newSec, setNewSec] = useState({ name: "" });
     const [newTask, setNewTask] = useState({ name: "", description: "" });
+
+    // Add animation styles to document head
+    useEffect(() => {
+        const style = document.createElement('style');
+        style.innerHTML = animationStyles;
+        document.head.appendChild(style);
+        return () => document.head.removeChild(style);
+    }, []);
 
 
     const { isAuthenticated, user, token } = useSelector((state) => state.auth);
@@ -42,7 +63,6 @@ export default function Home() {
                 if (!user?.id) { console.log("err", user); return; }
                 const sectionsData = await getSections(user.id, token);
                 setSections(sectionsData);
-                console.log("sectionsData", sectionsData);
             } catch (error) {
                 console.error("Error fetching sections:", error);
             }
@@ -58,16 +78,26 @@ export default function Home() {
         try {
             const taskData = { name: newTask.name, description: newTask.description };
             const task = await addTask(sectionId, taskData);
+
+            // Update the sections state with the newly created task from the API response
+            // This ensures we have the correct task ID for navigation
             setSections((prevSections) =>
                 prevSections.map((section) =>
                     section._id === sectionId
-                        ? { ...section, tasks: [...section.tasks, taskData] }
+                        ? { ...section, tasks: [...section.tasks, task] }
                         : section
                 )
             );
+
             setNewTask({ name: '', description: '' });
             setIsModalOpen(false);
             notifySuccess('Task created successfully');
+
+            // After successful task creation, fetch the sections again to ensure we have the latest data
+            if (user?.id) {
+                const sectionsData = await getSections(user.id, token);
+                setSections(sectionsData);
+            }
         } catch (error) {
             notifyError('Error creating task');
             console.error('Error creating task:', error);
@@ -193,12 +223,20 @@ export default function Home() {
                         <button
                             type="button"
                             onClick={() => setIsModalSectionOpen(true)}
-                            className="text-white fixed sm:top-1/3 top-1/4 right-0 bg-gray-800 opacity-25 hover:opacity-75 focus:opacity-100 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-l-full text-sm pl-4 py-8 mb-4"
+                            className="text-white fixed sm:top-1/3 top-1/4 right-0 bg-gradient-to-r from-gray-800 to-gray-700 opacity-60 hover:opacity-100 focus:opacity-100 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-l-full text-sm pl-2 py-3 mb-4 shadow-sm transition-all duration-300 ease-in-out transform hover:-translate-x-1 hover:shadow-xl group z-50"
+                            title="Create a new section"
                         >
-                            <div className="flex flex-col gap-2">
-                                <span>Create</span>
-                                <span>Section</span>
+                            <div className="flex items-center justify-center w-8 h-8 group-hover:hidden">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
                             </div>
+                            <div className="hidden group-hover:flex flex-col gap-2 relative px-2">
+                                <span className="font-bold">Create</span>
+                                <span className="font-bold">Section</span>
+                                <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-0 group-hover:h-full bg-blue-400 transition-all duration-300 rounded-full"></div>
+                            </div>
+                            <span className="absolute top-1/2 -translate-y-1/2 right-full mr-2 bg-gray-800 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-xs pointer-events-none">Add new section</span>
                         </button>
                         {sections.map((section) => (
                             <div key={section._id} className="block mt-8">
