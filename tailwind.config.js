@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class', // Enable class-based dark mode
   theme: {
     extend: {
       colors: {
@@ -33,6 +34,22 @@ export default {
           900: '#212529',
           950: '#0d0f12',
         },
+        dark: {
+          bg: '#1a1a1a',
+          'bg-secondary': '#2d2d2d',
+          'text-primary': '#e2e2e2',
+          'text-secondary': '#a0a0a0',
+          accent: '#3b82f6',
+          border: '#404040',
+        },
+        light: {
+          bg: '#ffffff',
+          'bg-secondary': '#f3f4f6',
+          'text-primary': '#1f2937',
+          'text-secondary': '#6b7280',
+          accent: '#2563eb',
+          border: '#e5e7eb',
+        },
         success: {
           50: '#ecfdf5',
           500: '#10b981',
@@ -54,6 +71,8 @@ export default {
         'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
         'button': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
         'button-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        'dark-card': '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1)',
+        'dark-card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

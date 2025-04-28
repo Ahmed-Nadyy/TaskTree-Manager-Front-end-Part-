@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { logout } from '../../redux/slices/authSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout, toggleDarkMode } from '../../redux/slices/authSlice';
 import NavSearch from './NavSearch';
 import MobileSearch from './MobileSearch';
 import MobileMenu from './MobileMenu';
 import Btn from './Btn';
-import { logoutUser } from '../../apiService'; 
-import { useNavigate } from 'react-router-dom'
-
+import { logoutUser, updateDarkMode } from '../../apiService'; 
+import { useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 
 export default function Navbar() {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
     const dispatch = useDispatch();
+    const { darkMode } = useSelector(state => state.auth);
 
     const toggleMobileMenu = () => {
         setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -21,18 +23,30 @@ export default function Navbar() {
 
     const toggleMobileSearch = () => {
         setIsMobileSearchOpen(!isMobileSearchOpen);
-        console.log('Toggle Mobile');
+    };
+
+    const handleDarkModeToggle = async () => {
+        dispatch(toggleDarkMode());
+        try {
+            await updateDarkMode(!darkMode);
+        } catch (error) {
+            console.error('Failed to update dark mode preference:', error);
+        }
+        // Update document class for dark mode
+        if (!darkMode) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
     };
 
     const handleLogout = async () => {
-        console.log('Logout');
         try {
             await logoutUser(); 
             dispatch(logout()); 
             localStorage.removeItem('authToken'); 
             localStorage.removeItem('user'); 
-            console.log("hahahah")
-            navigate('/login')
+            navigate('/login');
         } catch (error) {
             console.log('Logout failed:', error);
         }
@@ -40,19 +54,32 @@ export default function Navbar() {
 
     return (
         <>
-            <nav className="bg-white border-gray-200 dark:bg-gray-900">
+            <nav className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-colors duration-200">
                 <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-                    <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
+                    <span className="self-center text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-200">
                         Task Tree
                     </span>
-                    <div className="flex md:order-2">
+                    <div className="flex md:order-2 items-center gap-4">
+                        <button
+                            onClick={handleDarkModeToggle}
+                            className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 
+                                rounded-lg transition-colors duration-200"
+                            aria-label="Toggle dark mode"
+                        >
+                            <FontAwesomeIcon 
+                                icon={darkMode ? faSun : faMoon} 
+                                className="w-5 h-5 transition-transform duration-200 hover:scale-110" 
+                            />
+                        </button>
                         <NavSearch 
                             toggleMobileSearch={toggleMobileSearch} 
                         />
                         <button
                             onClick={toggleMobileMenu}
                             type="button"
-                            className="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+                            className="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg 
+                                md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 
+                                dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
                             aria-controls="navbar-search"
                             aria-expanded={isMobileMenuOpen ? 'true' : 'false'}
                         >
@@ -72,8 +99,8 @@ export default function Navbar() {
                                 />
                             </svg>
                         </button>
-                        <div className="hidden sm:block" onClick={handleLogout}>
-                            <Btn title="Logout" />
+                        <div className="hidden sm:block">
+                            <Btn title="Logout" onClick={handleLogout} />
                         </div>
                     </div>
                     <MobileSearch 
@@ -83,11 +110,12 @@ export default function Navbar() {
                 </div>
             </nav>
 
-            {/* Mobile Menu */}
             <MobileMenu
                 isMobileMenuOpen={isMobileMenuOpen}
                 toggleMobileMenu={toggleMobileMenu}
                 handleLogout={handleLogout}
+                darkMode={darkMode}
+                onToggleDarkMode={handleDarkModeToggle}
             />
         </>
     );

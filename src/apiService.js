@@ -1,6 +1,6 @@
-    import axios from 'axios';
+import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL|| 'http://localhost:5000/api'; // Default to localhost if VITE_API_URL is not set
 
 const apiClient = axios.create({
     baseURL: API_URL,
@@ -23,7 +23,12 @@ export const loginUser = async (credentials) => {
 
 export const getSections = async (userId) => {
     try {
-        const response = await apiClient.get(`/sections/${userId}`);
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.get(`/sections/${userId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         return response.data;
     } catch (error) {
         console.error('Error fetching sections:', error);
@@ -33,7 +38,12 @@ export const getSections = async (userId) => {
 
 export const addSection = async (sectionData) => {
     try {
-        const response = await apiClient.post('/sections', sectionData);
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.post('/sections', sectionData, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         return response.data;
     } catch (error) {
         console.error('Error adding section:', error);
@@ -43,7 +53,22 @@ export const addSection = async (sectionData) => {
 
 export const addTask = async (sectionId, taskData) => {
     try {
-        const response = await apiClient.post(`/tasks/${sectionId}`, taskData);
+        const token = localStorage.getItem('authToken');
+        // Ensure all task fields are properly formatted
+        const formattedTaskData = {
+            name: taskData.name,
+            description: taskData.description || '',
+            priority: taskData.priority || 'low',
+            isImportant: taskData.isImportant || false,
+            dueDate: taskData.dueDate || null,
+            tags: taskData.tags || []
+        };
+
+        const response = await apiClient.post(`/tasks/${sectionId}`, formattedTaskData, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         return response.data;
     } catch (error) {
         console.error('Error adding task:', error);
@@ -53,7 +78,12 @@ export const addTask = async (sectionId, taskData) => {
 
 export const deleteSection = async (sectionId) => {
     try {
-        const response = await apiClient.delete(`/sections/${sectionId}`);
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.delete(`/sections/${sectionId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         return response.data;
     } catch (error) {
         console.error('Error deleting section:', error);
@@ -87,9 +117,23 @@ export const verifyToken = async () => {
     }
 };
 
-export const updateTask = async (taskId, updates) => {
+export const updateTask = async (sectionId, taskId, updates) => {
     try {
-        const response = await apiClient.put(`/tasks/${taskId}`, updates);
+        const token = localStorage.getItem('authToken');
+        // Ensure all task fields are properly formatted
+        const formattedUpdates = {
+            ...updates,
+            priority: updates.priority || undefined,
+            isImportant: updates.isImportant !== undefined ? updates.isImportant : undefined,
+            dueDate: updates.dueDate || undefined,
+            tags: updates.tags || undefined
+        };
+
+        const response = await apiClient.put(`/tasks/${sectionId}/${taskId}`, formattedUpdates, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         return response.data;
     } catch (error) {
         console.error('Error updating task:', error);
@@ -109,7 +153,12 @@ export const refreshToken = async () => {
     
 export const deleteTask = async (sectionId, taskId) => {
     try {
-        const response = await apiClient.delete(`/tasks/${sectionId}/${taskId}`);
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.delete(`/tasks/${sectionId}/${taskId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         return response.data;
     } catch (error) {
         console.error('Error deleting task:', error);
@@ -119,7 +168,12 @@ export const deleteTask = async (sectionId, taskId) => {
 
 export const addSubTask = async (sectionId, taskId, subTaskData) => {
     try {
-        const response = await apiClient.post(`/subtasks/${sectionId}/${taskId}`, subTaskData);
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.post(`/subtasks/${sectionId}/${taskId}`, subTaskData, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         return response.data;
     } catch (error) {
         console.error('Error adding subtask:', error);
@@ -129,7 +183,12 @@ export const addSubTask = async (sectionId, taskId, subTaskData) => {
 
 export const updateSubTask = async (sectionId, taskId, subTaskId, updates) => {
     try {
-        const response = await apiClient.put(`/subtasks/${sectionId}/${taskId}/${subTaskId}`, updates);
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.put(`/subtasks/${sectionId}/${taskId}/${subTaskId}`, updates, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         return response.data;
     } catch (error) {
         console.error('Error updating subtask:', error);
@@ -139,7 +198,12 @@ export const updateSubTask = async (sectionId, taskId, subTaskId, updates) => {
 
 export const deleteSubTask = async (sectionId, taskId, subTaskId) => {
     try {
-        const response = await apiClient.delete(`/subtasks/${sectionId}/${taskId}/${subTaskId}`);
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.delete(`/subtasks/${sectionId}/${taskId}/${subTaskId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         return response.data;
     } catch (error) {
         console.error('Error deleting subtask:', error);
@@ -147,15 +211,25 @@ export const deleteSubTask = async (sectionId, taskId, subTaskId) => {
     }
 };
 
-// Mark Task as Done
-export const markTaskAsDone = async (sectionId, taskId) => {
-    console.log("Marking task as done:", sectionId, taskId);
+// Mark Task as Done or Undone
+export const markTaskAsDone = async (sectionId, taskId, isDone = true) => {
+    console.log(`Marking task as ${isDone ? 'done' : 'undone'}:`, sectionId, taskId);
+    console.log("isDone:", isDone);
     try {
-        const response = await apiClient.put(`/tasks/${sectionId}/${taskId}/done`);
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.put(`/tasks/${sectionId}/${taskId}/done`, 
+            { isDone },
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
+        console.log("response:", response);
         return response.data;
     } catch (error) {
-        console.error('Error marking task as done:', error);
-        throw new Error('Failed to mark task as done');
+        console.error(`Error marking task as ${isDone ? 'done' : 'undone'}:`, error);
+        throw new Error(`Failed to mark task as ${isDone ? 'done' : 'undone'}`);
     }
 };
 
@@ -163,7 +237,12 @@ export const markTaskAsDone = async (sectionId, taskId) => {
 export const markSubTaskAsDone = async (sectionId, taskId, subTaskId) => {
     console.log("Marking subtask as done:", sectionId, taskId, subTaskId);
     try {
-        const response = await apiClient.put(`/subtasks/${sectionId}/${taskId}/${subTaskId}/done`);
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.put(`/subtasks/${sectionId}/${taskId}/${subTaskId}/done`, {}, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         return response.data;
     } catch (error) {
         console.error('Error marking subtask as done:', error);
@@ -171,8 +250,22 @@ export const markSubTaskAsDone = async (sectionId, taskId, subTaskId) => {
     }
 };
 
+// Update Dark Mode Preference
+export const updateDarkMode = async (darkMode) => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.put('/auth/darkmode', { darkMode }, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error updating dark mode:', error);
+        throw new Error('Failed to update dark mode preference');
+    }
+};
 
-    
 apiClient.interceptors.response.use(
     response => response,
     async error => {

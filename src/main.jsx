@@ -9,6 +9,14 @@ import './index.css';
 // Initialize authentication state
 store.dispatch(initializeAuth());
 
+// Set initial dark mode class based on localStorage
+const darkMode = localStorage.getItem('darkMode') === 'true';
+if (darkMode) {
+  document.documentElement.classList.add('dark');
+} else {
+  document.documentElement.classList.remove('dark');
+}
+
 ReactDOM.render(
   <Provider store={store}>
     <App />
