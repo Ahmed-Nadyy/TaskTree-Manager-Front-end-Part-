@@ -25,6 +25,7 @@ export default function App() {
         <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
           <Routes>
             <Route path="/" element={<Login />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Home />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/task/:userId/:sectionId/:taskId" element={<TaskDetails />} />

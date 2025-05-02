@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { useSelector } from 'react-redux';
+import React, { useEffect, useState, useMemo } from "react";
+import { useSelector, useDispatch } from 'react-redux';
 import { getSections, addSection, addTask, deleteSection, updateTask, deleteTask, markTaskAsDone } from '../../apiService';
+import { setSection } from '../../redux/slices/filterSlice';
 import ProtectedRoute from '../../components/ProtectedRoute.jsx';
 import TaskCard from '../../components/HomeComponents/TaskCard.jsx';
 import Navbar from '../../components/Navbar/Navbar.jsx';
@@ -46,6 +47,78 @@ export default function Home() {
 
 
     const { isAuthenticated, user, token } = useSelector((state) => state.auth);
+    const filterState = useSelector((state) => state.filter);
+    const dispatch = useDispatch();
+    
+    // Filter tasks based on filter criteria
+    const filterTasks = (tasks, sectionId) => {
+        if (!tasks) return [];
+        
+        return tasks.filter(task => {
+            // Filter by section
+            if (filterState.section && filterState.section !== sectionId) {
+                return false;
+            }
+            
+            // Filter by status
+            if (filterState.status === 'completed' && !task.isDone) {
+                return false;
+            }
+            if (filterState.status === 'incomplete' && task.isDone) {
+                return false;
+            }
+            
+            // Filter by priority
+            if (filterState.priority && task.priority !== filterState.priority) {
+                return false;
+            }
+            
+            // Filter by due date range
+            if (filterState.dueDateRange.startDate && task.dueDate) {
+                const taskDate = new Date(task.dueDate);
+                const startDate = new Date(filterState.dueDateRange.startDate);
+                if (taskDate < startDate) {
+                    return false;
+                }
+            }
+            
+            if (filterState.dueDateRange.endDate && task.dueDate) {
+                const taskDate = new Date(task.dueDate);
+                const endDate = new Date(filterState.dueDateRange.endDate);
+                endDate.setHours(23, 59, 59, 999); // End of the day
+                if (taskDate > endDate) {
+                    return false;
+                }
+            }
+            
+            // Filter by search term (search in task name and tags)
+            if (filterState.searchTerm) {
+                const searchLower = filterState.searchTerm.toLowerCase();
+                const nameMatch = task.name.toLowerCase().includes(searchLower);
+                const tagMatch = task.tags && task.tags.some(tag => 
+                    tag.toLowerCase().includes(searchLower)
+                );
+                
+                if (!nameMatch && !tagMatch) {
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+    };
+    
+    // Update sections in FilterComponent when they change
+    useEffect(() => {
+        if (sections.length > 0) {
+            // This would ideally update a global state that FilterComponent can access
+            // For now, we'll just make sure the section filter works correctly
+            const sectionExists = sections.some(section => section._id === filterState.section);
+            if (filterState.section && !sectionExists) {
+                dispatch(setSection(''));
+            }
+        }
+    }, [sections, filterState.section, dispatch]);
 
     const notifySuccess = (message) => {
         notification.success({
@@ -64,7 +137,7 @@ export default function Home() {
     useEffect(() => {
         // console.log(isAuthenticated, user);
         if (!isAuthenticated) {
-            navigate('/login');
+            navigate('/');
             return;
         }
         const fetchSections = async () => {
@@ -315,13 +388,96 @@ export default function Home() {
                                 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity 
                                 duration-300 whitespace-nowrap text-xs pointer-events-none">Add new section</span>
                         </button>
-                        {sections.map((section) => (
-                            <div key={section._id} className="block mt-8">
-                                <div className="flex gap-4 justify-center items-center ml-4">
-                                    <h2 className="sm:text-lg font-bold mb-4 min-w-[100px] text-gray-900 dark:text-gray-100">
-                                        {section.name}
-                                    </h2>
-                                    <div className="sm:w-[100%] w-[80%] h-0.5 bg-gray-800 dark:bg-gray-700"></div>
+                        {sections.map((section) => {
+                            // Check if any tasks in this section match the current filter criteria
+                            const filteredTasks = filterTasks(section.tasks, section._id);
+                            
+                            // Only render sections that have matching tasks or when no filters are applied
+                            const hasActiveFilters = filterState.section || filterState.status || 
+                                filterState.priority || filterState.dueDateRange.startDate || 
+                                filterState.dueDateRange.endDate || filterState.searchTerm || 
+                                filterState.tags.length > 0;
+                                
+                            // If filters are active and no tasks match, don't render this section
+                            if (hasActiveFilters && filteredTasks.length === 0) {
+                                return null;
+                            }
+                            
+                            return (
+                                <div key={section._id} className="block mt-8">
+                                    <div className="flex gap-4 justify-center items-center ml-4">
+                                        <h2 className="sm:text-lg font-bold mb-4 min-w-[100px] text-gray-900 dark:text-gray-100">
+                                            {section.name}
+                                        </h2>
+                                        <div className="sm:w-[100%] w-[80%] h-0.5 bg-gray-800 dark:bg-gray-700"></div>
+                                        <div className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newSections = sections.map(s => ({
+                                                    ...s,
+                                                    isMenuOpen: s._id === section._id ? !s.isMenuOpen : false
+                                                }));
+                                                setSections(newSections);
+                                            }}
+                                            className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 
+                                                focus:outline-none transition-colors duration-200 p-1"
+                                            aria-label="Section options"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                            </svg>
+                                        </button>
+                                        {section.isMenuOpen && (
+                                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
+                                                <ul className="py-1">
+                                                    <li>
+                                                        <button
+                                                            onClick={() => {
+                                                                dispatch(setSection(section._id));
+                                                                // Close the menu after selecting
+                                                                const newSections = sections.map(s => ({
+                                                                    ...s,
+                                                                    isMenuOpen: false
+                                                                }));
+                                                                setSections(newSections);
+                                                                notification.success({
+                                                                    message: 'Filter Applied',
+                                                                    description: `Filtering tasks in "${section.name}" section`,
+                                                                });
+                                                            }}
+                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                                            </svg>
+                                                            Filter Section
+                                                        </button>
+                                                    </li>
+                                                    <li>
+                                                        <button
+                                                            onClick={() => {
+                                                                // Close the menu first
+                                                                const newSections = sections.map(s => ({
+                                                                    ...s,
+                                                                    isMenuOpen: false
+                                                                }));
+                                                                setSections(newSections);
+                                                                // Then delete after a short delay to avoid UI glitches
+                                                                setTimeout(() => handleDeleteSection(section._id), 100);
+                                                            }}
+                                                            className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                            Delete Section
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 <button
                                     type="button"
@@ -335,17 +491,8 @@ export default function Home() {
                                 >
                                     Create Task
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleDeleteSection(section._id)}
-                                    className="text-white mx-3 bg-red-800 dark:bg-red-700 hover:bg-red-900 dark:hover:bg-red-600 
-                                        focus:outline-none focus:ring-4 focus:ring-red-300 dark:focus:ring-red-700 
-                                        font-medium rounded-lg text-sm px-6 py-2 mb-4 transition-colors duration-200"
-                                >
-                                    Delete Section
-                                </button>
                                 <TaskCard
-                                    tasks={section.tasks}
+                                    tasks={filteredTasks}
                                     handleIsDone={handleTaskIsDone}
                                     userId={section.userId}
                                     section={section}
@@ -353,7 +500,8 @@ export default function Home() {
                                     handleDeleteTask={handleDeleteTask}
                                 />
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
 
