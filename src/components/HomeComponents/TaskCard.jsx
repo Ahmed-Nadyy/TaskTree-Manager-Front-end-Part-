@@ -2,20 +2,7 @@ import { faTrash, faCheckCircle, faCircle, faClock, faFlag, faPenToSquare, faSta
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useEffect } from "react";
 
-export default function TaskCard({ tasks, handleIsDone, userId, section, handleUpdateTask, handleDeleteTask, displayMode }) {
-    // Use window.innerWidth to determine default display mode based on screen size
-    const [screenWidth, setScreenWidth] = useState(window.innerWidth);
-    
-    // Update screen width when window resizes
-    useEffect(() => {
-        const handleResize = () => setScreenWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-    
-    // If displayMode is not provided, set default based on screen width
-    // Mobile (<768px): horizontal, Tablet/Desktop (≥768px): vertical
-    const effectiveDisplayMode = displayMode || (screenWidth < 768 ? 'horizontal' : 'vertical');
+export default function TaskCard({ tasks, handleIsDone, userId, section, handleUpdateTask, handleDeleteTask }) {
     const [hoveredTaskId, setHoveredTaskId] = useState(null);
     const [animatedTasks, setAnimatedTasks] = useState([]);
     const [editModalOpen, setEditModalOpen] = useState(false);
@@ -67,12 +54,11 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
 
     return (
         <>
-            <div className={`${effectiveDisplayMode === 'vertical' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex space-x-4 py-2'}`}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {tasks.map((task) => (
                     <div
                         key={task._id}
                         className={`${task.isDone ? "bg-green-200 dark:bg-green-900" : "bg-white dark:bg-dark-bg"}
-                            ${effectiveDisplayMode === 'horizontal' ? 'min-w-[280px] flex-shrink-0' : ''}
                             shadow-card dark:shadow-dark-card hover:shadow-card-hover dark:hover:shadow-dark-card-hover 
                             p-3 rounded-xl transition-all duration-300 
                             ${animatedTasks.includes(task._id) ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}

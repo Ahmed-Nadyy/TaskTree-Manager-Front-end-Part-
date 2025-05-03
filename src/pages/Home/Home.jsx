@@ -2,7 +2,6 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import { getSections, addSection, addTask, deleteSection, updateTask, deleteTask, markTaskAsDone } from '../../apiService';
 import { setSection } from '../../redux/slices/filterSlice';
-import { toggleSectionDisplayMode } from '../../redux/slices/displaySlice';
 import ProtectedRoute from '../../components/ProtectedRoute.jsx';
 import TaskCard from '../../components/HomeComponents/TaskCard.jsx';
 import Navbar from '../../components/Navbar/Navbar.jsx';
@@ -17,32 +16,6 @@ const animationStyles = `
   }
   .animate-pulse-slow {
     animation: pulse-slow 2s infinite;
-  }
-  
-  /* Hide scrollbar but maintain scrolling functionality */
-  .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
-  }
-  
-  /* Show scrollbar on desktop and tablet */
-  .scrollbar-default {
-    -ms-overflow-style: auto;  /* IE and Edge */
-    scrollbar-width: auto;  /* Firefox */
-  }
-  .scrollbar-default::-webkit-scrollbar {
-    display: block;  /* Chrome, Safari and Opera */
-    height: 8px;
-  }
-  .scrollbar-default::-webkit-scrollbar-thumb {
-    background-color: rgba(156, 163, 175, 0.5);  /* gray-400 with opacity */
-    border-radius: 4px;
-  }
-  .scrollbar-default::-webkit-scrollbar-track {
-    background: rgba(229, 231, 235, 0.3);  /* gray-200 with opacity */
   }
 `;
 
@@ -75,7 +48,6 @@ export default function Home() {
 
     const { isAuthenticated, user, token } = useSelector((state) => state.auth);
     const filterState = useSelector((state) => state.filter);
-    const displayState = useSelector((state) => state.display);
     const dispatch = useDispatch();
     
     // Filter tasks based on filter criteria
@@ -485,32 +457,6 @@ export default function Home() {
                                                     <li>
                                                         <button
                                                             onClick={() => {
-                                                                // Toggle display mode for this section
-                                                                dispatch(toggleSectionDisplayMode(section._id));
-                                                                // Close the menu after selecting
-                                                                const newSections = sections.map(s => ({
-                                                                    ...s,
-                                                                    isMenuOpen: false
-                                                                }));
-                                                                setSections(newSections);
-                                                                const currentMode = displayState.sectionDisplayMode[section._id] || 'horizontal';
-                                                                const newMode = currentMode === 'horizontal' ? 'vertical' : 'horizontal';
-                                                                notification.success({
-                                                                    message: 'Display Mode Changed',
-                                                                    description: `Tasks will now display in ${newMode} mode`,
-                                                                });
-                                                            }}
-                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                                        >
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                                                            </svg>
-                                                            {(displayState.sectionDisplayMode[section._id] === 'vertical') ? 'Show Horizontally' : 'Show Vertically'}
-                                                        </button>
-                                                    </li>
-                                                    <li>
-                                                        <button
-                                                            onClick={() => {
                                                                 // Close the menu first
                                                                 const newSections = sections.map(s => ({
                                                                     ...s,
@@ -545,17 +491,14 @@ export default function Home() {
                                 >
                                     Create Task
                                 </button>
-                                <div className={`${(displayState.sectionDisplayMode[section._id] === 'vertical') ? '' : 'sm:overflow-x-auto pb-4 -sm:scrollbar-hide md:scrollbar-default'}`}>
-                                    <TaskCard
-                                        tasks={filteredTasks}
-                                        handleIsDone={handleTaskIsDone}
-                                        userId={section.userId}
-                                        section={section}
-                                        handleUpdateTask={handleUpdateTask}
-                                        handleDeleteTask={handleDeleteTask}
-                                        displayMode={displayState.sectionDisplayMode[section._id]}
-                                    />
-                                </div>
+                                <TaskCard
+                                    tasks={filteredTasks}
+                                    handleIsDone={handleTaskIsDone}
+                                    userId={section.userId}
+                                    section={section}
+                                    handleUpdateTask={handleUpdateTask}
+                                    handleDeleteTask={handleDeleteTask}
+                                />
                             </div>
                             );
                         })}
