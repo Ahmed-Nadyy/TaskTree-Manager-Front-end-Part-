@@ -1,4 +1,4 @@
-import { faTrash, faCheckCircle, faCircle, faClock, faFlag, faPenToSquare, faStar, faExclamationCircle, faCalendarAlt, faTag } from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faCheckCircle, faCircle, faClock, faFlag, faPenToSquare, faStar, faExclamationCircle, faCalendarAlt, faTag, faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useEffect } from "react";
 
@@ -9,6 +9,8 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
     const [editingTask, setEditingTask] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [visibleTasks, setVisibleTasks] = useState(3);
     
     // Add animation when tasks are loaded
     useEffect(() => {
@@ -17,6 +19,43 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
         }, 100);
         return () => clearTimeout(timer);
     }, [tasks]);
+
+    // Get visible tasks based on screen size
+    const getVisibleTasks = () => {
+        // On desktop (sm and above), show all tasks
+        if (window.innerWidth >= 640) { // 640px is the 'sm' breakpoint in Tailwind
+            return tasks;
+        }
+        // On mobile, show limited tasks based on expanded state
+        return tasks.slice(0, visibleTasks);
+    };
+
+    // Handle window resize
+    useEffect(() => {
+        const handleResize = () => {
+            // Force re-render on resize to update visible tasks
+            setVisibleTasks(prev => prev);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Reset visible tasks when tasks array changes
+    useEffect(() => {
+        setVisibleTasks(3);
+        setIsExpanded(false);
+    }, [tasks.length]);
+
+    const handleShowMore = () => {
+        if (isExpanded) {
+            setVisibleTasks(3);
+            setIsExpanded(false);
+        } else {
+            setVisibleTasks(tasks.length);
+            setIsExpanded(true);
+        }
+    };
 
     const handleEditClick = (e, task) => {
         e.stopPropagation();
@@ -55,8 +94,7 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
     return (
         <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {tasks.map((task) => (
-                    <div
+                {getVisibleTasks().map((task) => (                    <div
                         key={task._id}
                         className={`${task.isDone ? "bg-green-200 dark:bg-green-900" : "bg-white dark:bg-dark-bg"}
                             shadow-card dark:shadow-dark-card hover:shadow-card-hover dark:hover:shadow-dark-card-hover 
@@ -69,7 +107,8 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                     ? "border-red-500" 
                                     : task.priority === "medium" 
                                         ? "border-yellow-500" 
-                                        : "border-blue-300"}`}
+                                        : "border-blue-300"}
+                            sm:mb-0 mb-4 last:mb-0`}
                         onMouseEnter={() => setHoveredTaskId(task._id)}
                         onMouseLeave={() => setHoveredTaskId(null)}
                         style={{ transitionDelay: `${tasks.indexOf(task) * 50}ms` }}
@@ -232,6 +271,28 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                     </div>
                 ))}
             </div>
+
+            {/* Show More/Less Button for mobile */}
+            {tasks.length > 3 && window.innerWidth < 640 && (
+                <button
+                    onClick={handleShowMore}
+                    className="w-full mt-4 py-2 px-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 
+                        rounded-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 
+                        transition-all duration-300 sm:hidden"
+                >
+                    <span className="mr-2">
+                        {isExpanded ? 'Show Less' : `Show ${tasks.length - visibleTasks} More Tasks`}
+                    </span>
+                    <FontAwesomeIcon icon={isExpanded ? faChevronUp : faChevronDown} />
+                </button>
+            )}
+
+            {/* Task Counter for mobile */}
+            {window.innerWidth < 640 && (
+                <div className="sm:hidden text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
+                    Showing {Math.min(visibleTasks, tasks.length)} of {tasks.length} tasks
+                </div>
+            )}
 
             {/* Edit Task Modal */}
             {editModalOpen && editingTask && (
