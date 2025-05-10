@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useSelector, useDispatch } from 'react-redux';
-import { getSections, addSection, addTask, deleteSection, updateTask, deleteTask, markTaskAsDone } from '../../apiService';
+import { getSections, addSection, addTask, deleteSection, updateTask, deleteTask, markTaskAsDone, shareSection } from '../../apiService';
 import { setSection } from '../../redux/slices/filterSlice';
 import ProtectedRoute from '../../components/ProtectedRoute.jsx';
 import TaskCard from '../../components/HomeComponents/TaskCard.jsx';
 import Navbar from '../../components/Navbar/Navbar.jsx';
 import { notification } from 'antd';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faShare } from '@fortawesome/free-solid-svg-icons';
 
 // Add custom animation styles
 const animationStyles = `
@@ -34,8 +36,11 @@ export default function Home() {
         isImportant: false,
         dueDate: "",
         tags: [],
-        isDone: false
+        isDone: false,
+        assignedTo: []
     });
+    const [emailInput, setEmailInput] = useState('');
+    const [assignedEmails, setAssignedEmails] = useState([]);
 
     // Add animation styles to document head
     useEffect(() => {
@@ -44,22 +49,21 @@ export default function Home() {
         document.head.appendChild(style);
         return () => document.head.removeChild(style);
     }, []);
-
-
     const { isAuthenticated, user, token } = useSelector((state) => state.auth);
+    const userRole = user?.role || 'solo';
     const filterState = useSelector((state) => state.filter);
     const dispatch = useDispatch();
-    
+
     // Filter tasks based on filter criteria
     const filterTasks = (tasks, sectionId) => {
         if (!tasks) return [];
-        
+
         return tasks.filter(task => {
             // Filter by section
             if (filterState.section && filterState.section !== sectionId) {
                 return false;
             }
-            
+
             // Filter by status
             if (filterState.status === 'completed' && !task.isDone) {
                 return false;
@@ -67,12 +71,12 @@ export default function Home() {
             if (filterState.status === 'incomplete' && task.isDone) {
                 return false;
             }
-            
+
             // Filter by priority
             if (filterState.priority && task.priority !== filterState.priority) {
                 return false;
             }
-            
+
             // Filter by due date range
             if (filterState.dueDateRange.startDate && task.dueDate) {
                 const taskDate = new Date(task.dueDate);
@@ -81,7 +85,7 @@ export default function Home() {
                     return false;
                 }
             }
-            
+
             if (filterState.dueDateRange.endDate && task.dueDate) {
                 const taskDate = new Date(task.dueDate);
                 const endDate = new Date(filterState.dueDateRange.endDate);
@@ -90,24 +94,24 @@ export default function Home() {
                     return false;
                 }
             }
-            
+
             // Filter by search term (search in task name and tags)
             if (filterState.searchTerm) {
                 const searchLower = filterState.searchTerm.toLowerCase();
                 const nameMatch = task.name.toLowerCase().includes(searchLower);
-                const tagMatch = task.tags && task.tags.some(tag => 
+                const tagMatch = task.tags && task.tags.some(tag =>
                     tag.toLowerCase().includes(searchLower)
                 );
-                
+
                 if (!nameMatch && !tagMatch) {
                     return false;
                 }
             }
-            
+
             return true;
         });
     };
-    
+
     // Update sections in FilterComponent when they change
     useEffect(() => {
         if (sections.length > 0) {
@@ -220,7 +224,7 @@ export default function Home() {
 
             const createdSection = await addSection({ userId: user.id, name: newSec.name });
             // Update with real section data
-            setSections(prev => prev.map(section => 
+            setSections(prev => prev.map(section =>
                 section._id === tempId ? createdSection : section
             ));
             notifySuccess('Section created successfully');
@@ -239,11 +243,18 @@ export default function Home() {
 
         setIsSubmitting(true);
         const tempId = Date.now().toString();
+
+        // Format task data with assignments
+        const taskData = {
+            ...newTask,
+            assignedTo: assignedEmails.map(email => ({ email }))
+        };
+
         try {
             // Optimistic create
             const tempTask = {
                 _id: tempId,
-                ...newTask,
+                ...taskData,
                 isDone: false,
                 subtaskCount: 0,
                 subtaskCompleted: 0
@@ -254,16 +265,28 @@ export default function Home() {
                     ? { ...section, tasks: [...section.tasks, tempTask] }
                     : section
             ));
-            setNewTask({ name: '', description: '', priority: 'low', isImportant: false, dueDate: '', tags: [] });
+
+            // Reset form
+            setNewTask({
+                name: '',
+                description: '',
+                priority: 'low',
+                isImportant: false,
+                dueDate: '',
+                tags: [],
+                assignedTo: []
+            });
+            setEmailInput('');
+            setAssignedEmails([]);
             setIsModalOpen(false);
 
-            const response = await addTask(sectionId, newTask);
-            // Update with real task data
+            // Send to server and update with real data
+            const response = await addTask(sectionId, taskData);
             setSections(prev => prev.map(section =>
                 section._id === sectionId
-                    ? { 
-                        ...section, 
-                        tasks: section.tasks.map(task => 
+                    ? {
+                        ...section,
+                        tasks: section.tasks.map(task =>
                             task._id === tempId ? response.task : task
                         )
                     }
@@ -288,8 +311,8 @@ export default function Home() {
         const originalSections = [...sections];
         try {
             // Optimistic update
-            setSections(prevSections => 
-                prevSections.map(section => 
+            setSections(prevSections =>
+                prevSections.map(section =>
                     section._id === sectionId
                         ? {
                             ...section,
@@ -341,6 +364,25 @@ export default function Home() {
         }
     };
 
+    const handleShareSection = async (sectionId) => {
+        try {
+            const response = await shareSection(sectionId);
+            const shareUrl = `${window.location.origin}/shared/${response.shareToken}`;
+
+            // Copy to clipboard
+            await navigator.clipboard.writeText(shareUrl);
+
+            notification.success({
+                message: 'Link Copied!',
+                description: 'Share link has been copied to clipboard.',
+            });
+        } catch (error) {
+            notification.error({
+                message: 'Share Failed',
+                description: error.response?.data?.error || 'Failed to generate share link.',
+            });
+        }
+    };
 
     return (
         <>
@@ -391,18 +433,18 @@ export default function Home() {
                         {sections.map((section) => {
                             // Check if any tasks in this section match the current filter criteria
                             const filteredTasks = filterTasks(section.tasks, section._id);
-                            
+
                             // Only render sections that have matching tasks or when no filters are applied
-                            const hasActiveFilters = filterState.section || filterState.status || 
-                                filterState.priority || filterState.dueDateRange.startDate || 
-                                filterState.dueDateRange.endDate || filterState.searchTerm || 
+                            const hasActiveFilters = filterState.section || filterState.status ||
+                                filterState.priority || filterState.dueDateRange.startDate ||
+                                filterState.dueDateRange.endDate || filterState.searchTerm ||
                                 filterState.tags.length > 0;
-                                
+
                             // If filters are active and no tasks match, don't render this section
                             if (hasActiveFilters && filteredTasks.length === 0) {
                                 return null;
                             }
-                            
+
                             return (
                                 <div key={section._id} className="block mt-8">
                                     <div className="flex gap-4 justify-center items-center ml-4">
@@ -411,95 +453,110 @@ export default function Home() {
                                         </h2>
                                         <div className="sm:w-[100%] w-[80%] h-0.5 bg-gray-800 dark:bg-gray-700"></div>
                                         <div className="relative">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newSections = sections.map(s => ({
+                                                        ...s,
+                                                        isMenuOpen: s._id === section._id ? !s.isMenuOpen : false
+                                                    }));
+                                                    setSections(newSections);
+                                                }}
+                                                className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 
+                                                focus:outline-none transition-colors duration-200 p-1"
+                                                aria-label="Section options"
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                                </svg>
+                                            </button>
+                                            {section.isMenuOpen && (
+                                                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
+                                                    <ul className="py-1">
+                                                        <li>
+                                                            <button
+                                                                onClick={() => {
+                                                                    dispatch(setSection(section._id));
+                                                                    // Close the menu after selecting
+                                                                    const newSections = sections.map(s => ({
+                                                                        ...s,
+                                                                        isMenuOpen: false
+                                                                    }));
+                                                                    setSections(newSections);
+                                                                    notification.success({
+                                                                        message: 'Filter Applied',
+                                                                        description: `Filtering tasks in "${section.name}" section`,
+                                                                    });
+                                                                }}
+                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                                                </svg>
+                                                                Filter Section
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button
+                                                                onClick={() => {
+                                                                    // Close the menu first
+                                                                    const newSections = sections.map(s => ({
+                                                                        ...s,
+                                                                        isMenuOpen: false
+                                                                    }));
+                                                                    setSections(newSections);
+                                                                    // Then delete after a short delay to avoid UI glitches
+                                                                    setTimeout(() => handleDeleteSection(section._id), 100);
+                                                                }}
+                                                                className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                                Delete Section
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-4 mb-4">
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                const newSections = sections.map(s => ({
-                                                    ...s,
-                                                    isMenuOpen: s._id === section._id ? !s.isMenuOpen : false
-                                                }));
-                                                setSections(newSections);
+                                                setIsModalOpen(true);
+                                                setSectionClicked(section._id);
                                             }}
-                                            className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 
-                                                focus:outline-none transition-colors duration-200 p-1"
-                                            aria-label="Section options"
+                                            className="text-white bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 
+                                            focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700 
+                                            font-medium rounded-lg text-sm px-6 py-2 transition-colors duration-200"
                                         >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                            </svg>
+                                            Create Task
                                         </button>
-                                        {section.isMenuOpen && (
-                                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
-                                                <ul className="py-1">
-                                                    <li>
-                                                        <button
-                                                            onClick={() => {
-                                                                dispatch(setSection(section._id));
-                                                                // Close the menu after selecting
-                                                                const newSections = sections.map(s => ({
-                                                                    ...s,
-                                                                    isMenuOpen: false
-                                                                }));
-                                                                setSections(newSections);
-                                                                notification.success({
-                                                                    message: 'Filter Applied',
-                                                                    description: `Filtering tasks in "${section.name}" section`,
-                                                                });
-                                                            }}
-                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                                        >
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                                                            </svg>
-                                                            Filter Section
-                                                        </button>
-                                                    </li>
-                                                    <li>
-                                                        <button
-                                                            onClick={() => {
-                                                                // Close the menu first
-                                                                const newSections = sections.map(s => ({
-                                                                    ...s,
-                                                                    isMenuOpen: false
-                                                                }));
-                                                                setSections(newSections);
-                                                                // Then delete after a short delay to avoid UI glitches
-                                                                setTimeout(() => handleDeleteSection(section._id), 100);
-                                                            }}
-                                                            className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                                        >
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                            </svg>
-                                                            Delete Section
-                                                        </button>
-                                                    </li>
-                                                </ul>
-                                            </div>
+
+                                        {(user?.role === 'team' || user?.role === 'company') && (
+                                            <button
+                                                onClick={() => handleShareSection(section._id)}
+                                                className="flex items-center gap-2 text-blue-500 hover:text-blue-700 
+                                                focus:outline-none focus:ring-2 focus:ring-blue-300 
+                                                font-medium rounded-lg text-sm px-4 py-2 transition-colors duration-200"
+                                                title="Share Section"
+                                            >
+                                                <FontAwesomeIcon icon={faShare} />
+                                                <span className="hidden sm:inline">Share</span>
+                                            </button>
                                         )}
                                     </div>
+                                    <TaskCard
+                                        tasks={filteredTasks}
+                                        handleIsDone={handleTaskIsDone}
+                                        userId={section.userId}
+                                        section={section}
+                                        handleUpdateTask={handleUpdateTask}
+                                        handleDeleteTask={handleDeleteTask}
+                                    />
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setIsModalOpen(true);
-                                        setSectionClicked(section._id);
-                                    }}
-                                    className="text-white bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 
-                                        focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700 
-                                        font-medium rounded-lg text-sm px-6 py-2 mb-4 transition-colors duration-200"
-                                >
-                                    Create Task
-                                </button>
-                                <TaskCard
-                                    tasks={filteredTasks}
-                                    handleIsDone={handleTaskIsDone}
-                                    userId={section.userId}
-                                    section={section}
-                                    handleUpdateTask={handleUpdateTask}
-                                    handleDeleteTask={handleDeleteTask}
-                                />
-                            </div>
                             );
                         })}
                     </div>
@@ -521,20 +578,20 @@ export default function Home() {
                                     <input
                                         type="text"
                                         value={newTask.name || ''}
-                                        onChange={(e) => setNewTask({...newTask, name: e.target.value})}
+                                        onChange={(e) => setNewTask({ ...newTask, name: e.target.value })}
                                         className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500
                                             dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
                                         required
                                     />
                                 </div>
-                                
+
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                         Description
                                     </label>
                                     <textarea
                                         value={newTask.description || ''}
-                                        onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                                        onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
                                         className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500
                                             dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
                                         rows="3"
@@ -547,7 +604,7 @@ export default function Home() {
                                     </label>
                                     <select
                                         value={newTask.priority || 'low'}
-                                        onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
+                                        onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
                                         className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500
                                             dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
                                     >
@@ -564,7 +621,7 @@ export default function Home() {
                                     <input
                                         type="date"
                                         value={newTask.dueDate || ''}
-                                        onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
+                                        onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
                                         className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500
                                             dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
                                     />
@@ -575,14 +632,12 @@ export default function Home() {
                                         <input
                                             type="checkbox"
                                             checked={newTask.isImportant || false}
-                                            onChange={(e) => setNewTask({...newTask, isImportant: e.target.checked})}
+                                            onChange={(e) => setNewTask({ ...newTask, isImportant: e.target.checked })}
                                             className="mr-2 dark:bg-gray-800 dark:border-gray-700"
                                         />
                                         <span className="text-sm font-medium">Mark as Important</span>
                                     </label>
-                                </div>
-
-                                <div className="mb-4">
+                                </div>                                <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                         Tags (comma separated)
                                     </label>
@@ -599,12 +654,80 @@ export default function Home() {
                                     />
                                 </div>
 
+                                {(userRole === 'team' || userRole === 'company') && (
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Assign to Team Members
+                                        </label>
+                                        <div className="flex gap-2 mb-2">
+                                            <input
+                                                type="email"
+                                                value={emailInput}
+                                                onChange={(e) => setEmailInput(e.target.value)}
+                                                placeholder="Enter team member's email"
+                                                className="flex-1 p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (emailInput && emailInput.includes('@')) {
+                                                        if (!assignedEmails.includes(emailInput)) {
+                                                            setAssignedEmails([...assignedEmails, emailInput]);
+                                                            setNewTask({
+                                                                ...newTask,
+                                                                assignedTo: [...(newTask.assignedTo || []), { email: emailInput }]
+                                                            });
+                                                            setEmailInput('');
+                                                        }
+                                                    }
+                                                }}
+                                                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                                            >
+                                                Add
+                                            </button>
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-2">
+                                            {assignedEmails.map((email, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full"
+                                                >
+                                                    <span className="text-sm text-gray-700 dark:text-gray-300">{email}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setAssignedEmails(assignedEmails.filter(e => e !== email));
+                                                            setNewTask({
+                                                                ...newTask,
+                                                                assignedTo: newTask.assignedTo.filter(user => user.email !== email)
+                                                            });
+                                                        }}
+                                                        className="text-red-500 hover:text-red-700"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="flex justify-end gap-2">
                                     <button
-                                        type="button"
-                                        onClick={() => {
+                                        type="button" onClick={() => {
                                             setIsModalOpen(false);
-                                            setNewTask({ name: '', description: '' });
+                                            setNewTask({
+                                                name: '',
+                                                description: '',
+                                                priority: 'low',
+                                                isImportant: false,
+                                                dueDate: '',
+                                                tags: [],
+                                                assignedTo: []
+                                            });
+                                            setEmailInput('');
+                                            setAssignedEmails([]);
                                         }}
                                         className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                                     >

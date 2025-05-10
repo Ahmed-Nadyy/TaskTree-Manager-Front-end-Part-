@@ -9,9 +9,10 @@ import {
     markSubTaskAsDone, 
 } from "../../apiService";
 import { notification } from 'antd';
+import { faShare, faUserPlus } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function TaskDetails() {
-    // Add CSS animations
     useEffect(() => {
         const style = document.createElement('style');
         style.innerHTML = `
@@ -60,6 +61,10 @@ export default function TaskDetails() {
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [filteredSubTasks, setFilteredSubTasks] = useState([]);
+    const [assignedEmails, setAssignedEmails] = useState([]);
+    const [emailInput, setEmailInput] = useState('');
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [userRole, setUserRole] = useState('solo');
     
     const notifySuccess = (message) => {
         notification.success({
@@ -76,6 +81,13 @@ export default function TaskDetails() {
             placement: 'bottomRight',
         });
     };
+
+    useEffect(() => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user) {
+            setUserRole(user.role);
+        }
+    }, []);
 
     const fetchSubTasks = async () => {
         setIsLoading(true);
@@ -123,17 +135,15 @@ export default function TaskDetails() {
         setIsSubmitting(true);
         try {
             const subtaskData = { name: newSubTask, isDone: false };
-            // Optimistic update
             const tempId = Date.now().toString();
             setSubTasks(prev => [...prev, { ...subtaskData, _id: tempId }]);
             setNewSubTask("");
             
             await addSubTask(sectionId, taskId, subtaskData);
-            await fetchSubTasks(); // Refresh to get the real ID
+            await fetchSubTasks();
             notifySuccess("Subtask added successfully");
         } catch (error) {
             console.error("Error adding subtask:", error);
-            // Remove the temporary subtask if the request failed
             setSubTasks(prev => prev.filter(st => st._id !== tempId));
             notifyError("Failed to add subtask");
         } finally {
@@ -148,7 +158,6 @@ export default function TaskDetails() {
 
             const updatedStatus = !subTask.isDone;
             
-            // Optimistic update
             setSubTasks(subTasks.map((sub) =>
                 sub._id === subTaskId ? { ...sub, isDone: updatedStatus } : sub
             ));
@@ -157,7 +166,6 @@ export default function TaskDetails() {
             notifySuccess(`Subtask marked as ${updatedStatus ? 'complete' : 'incomplete'}`);
         } catch (error) {
             console.error("Error toggling subtask:", error);
-            // Revert the optimistic update
             setSubTasks(subTasks.map((sub) =>
                 sub._id === subTaskId ? { ...sub, isDone: !updatedStatus } : sub
             ));
@@ -169,7 +177,6 @@ export default function TaskDetails() {
         if (!window.confirm("Are you sure you want to delete this subtask?")) return;
 
         try {
-            // Optimistic delete
             const removedSubTask = subTasks.find(st => st._id === subTaskId);
             setSubTasks(prev => prev.filter(st => st._id !== subTaskId));
             
@@ -177,7 +184,6 @@ export default function TaskDetails() {
             notifySuccess("Subtask deleted successfully");
         } catch (error) {
             console.log("Error deleting subtask:", error);
-            // Restore the subtask if delete failed
             setSubTasks(prev => [...prev, removedSubTask]);
             notifyError("Failed to delete subtask");
         }
@@ -201,7 +207,6 @@ export default function TaskDetails() {
         setIsSubmitting(true);
         const originalSubTasks = [...subTasks];
         try {
-            // Optimistic update
             setSubTasks(subTasks.map(sub =>
                 sub._id === subTaskId ? { ...sub, name: updatedSubTaskName } : sub
             ));
@@ -212,7 +217,6 @@ export default function TaskDetails() {
             notifySuccess("Subtask updated successfully");
         } catch (error) {
             console.log("Error updating subtask:", error);
-            // Restore original state if update failed
             setSubTasks(originalSubTasks);
             notifyError("Failed to update subtask");
         } finally {
@@ -220,14 +224,54 @@ export default function TaskDetails() {
         }
     };
 
+    const handleAddEmail = () => {
+        if (emailInput && emailInput.includes('@')) {
+            if (!assignedEmails.includes(emailInput)) {
+                setAssignedEmails([...assignedEmails, emailInput]);
+                setEmailInput('');
+            } else {
+                notification.warning({
+                    message: 'Already Added',
+                    description: 'This email has already been added to the task.',
+                });
+            }
+        } else {
+            notification.error({
+                message: 'Invalid Email',
+                description: 'Please enter a valid email address.',
+            });
+        }
+    };
+
+    const handleRemoveEmail = (email) => {
+        setAssignedEmails(assignedEmails.filter(e => e !== email));
+    };
+
+    const handleShareSection = async () => {
+        try {
+            const response = await shareSection(sectionId);
+            const shareUrl = `${window.location.origin}/shared/${response.shareToken}`;
+            
+            await navigator.clipboard.writeText(shareUrl);
+            
+            notification.success({
+                message: 'Link Copied!',
+                description: 'Share link has been copied to clipboard.',
+            });
+        } catch (error) {
+            notification.error({
+                message: 'Share Failed',
+                description: error.response?.data?.error || 'Failed to generate share link.',
+            });
+        }
+    };
+
     useEffect(() => {
         const handleKeyDown = (e) => {
-            // Add new subtask with Ctrl+Enter
             if (e.ctrlKey && e.key === 'Enter' && document.activeElement.placeholder === "Enter your subtask here") {
                 handleAddSubTask();
             }
             
-            // Cancel editing with Escape key
             if (e.key === 'Escape' && editingSubTaskId) {
                 handleCancelEdit();
             }
@@ -262,8 +306,7 @@ export default function TaskDetails() {
                         </h1>
                     </div>
 
-                    {/* Search input */}
-                    <div className="mb-4">
+                    {/* <div className="mb-4">
                         <input
                             type="text"
                             placeholder="Search subtasks..."
@@ -273,7 +316,7 @@ export default function TaskDetails() {
                                 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200
                                 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                         />
-                    </div>
+                    </div> */}
 
                     <div className="mt-4 flex sm:flex-row flex-col items-center gap-3">
                         <input
@@ -307,6 +350,60 @@ export default function TaskDetails() {
                             ) : 'Add SubTask'}
                         </button>
                     </div>
+
+                    {(userRole === 'team' || userRole === 'company') && (
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Assign to Team Members
+                            </label>
+                            <div className="flex gap-2 mb-2">
+                                <input
+                                    type="email"
+                                    value={emailInput}
+                                    onChange={(e) => setEmailInput(e.target.value)}
+                                    placeholder="Enter team member's email"
+                                    className="flex-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleAddEmail}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                                >
+                                    <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
+                                    Add
+                                </button>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-2">
+                                {assignedEmails.map((email, index) => (
+                                    <div
+                                        key={index}
+                                        className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full"
+                                    >
+                                        <span className="text-sm">{email}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveEmail(email)}
+                                            className="text-red-500 hover:text-red-700"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* {(userRole === 'team' || userRole === 'company') && (
+                        <button
+                            type="button"
+                            onClick={handleShareSection}
+                            className="mb-4 flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                            <FontAwesomeIcon icon={faShare} />
+                            Share Section
+                        </button>
+                    )} */}
 
                     {isLoading ? (
                         <div className="flex justify-center items-center py-10">
@@ -370,7 +467,6 @@ export default function TaskDetails() {
                                         )}
                                     </div>
 
-                                    {/* Actions */}
                                     <div className="flex items-center gap-2">
                                         {editingSubTaskId === subTask._id ? (
                                             <>

@@ -20,12 +20,13 @@ export const initializeAuth = createAsyncThunk(
         const token = localStorage.getItem('authToken');
         if (!token) return;
 
-        try {
-            const userData = await verifyToken();
+        try {            const response = await verifyToken();
             dispatch(loginSuccess({
-                user: userData,
+                user: response.user,
                 token: token
             }));
+            // Update localStorage with fresh user data
+            localStorage.setItem('user', JSON.stringify(response.user));
         } catch (error) {
             dispatch(logout());
         }

@@ -16,6 +16,16 @@ export const registerUser = async (userData) => {
     return response.data;
 };
 
+export const verifyOTP = async ({ userId, otp }) => {
+    const response = await apiClient.post('/auth/verify-otp', { userId, otp });
+    return response.data;
+};
+
+export const resendOTP = async ({ userId }) => {
+    const response = await apiClient.post('/auth/resend-otp', { userId });
+    return response.data;
+};
+
 export const loginUser = async (credentials) => {
     const response = await apiClient.post('/auth/login', credentials);
     return response.data;
@@ -61,7 +71,8 @@ export const addTask = async (sectionId, taskData) => {
             priority: taskData.priority || 'low',
             isImportant: taskData.isImportant || false,
             dueDate: taskData.dueDate || null,
-            tags: taskData.tags || []
+            tags: taskData.tags || [],
+            assignedTo: taskData.assignedTo || []
         };
 
         const response = await apiClient.post(`/tasks/${sectionId}`, formattedTaskData, {
@@ -264,6 +275,31 @@ export const updateDarkMode = async (darkMode) => {
         console.error('Error updating dark mode:', error);
         throw new Error('Failed to update dark mode preference');
     }
+};
+
+export const assignTask = async (taskId, sectionId, emails) => {
+    const response = await apiClient.post(`/tasks/${taskId}/assign`, { emails, sectionId });
+    return response.data;
+};
+
+export const shareSection = async (sectionId) => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.post(`/sections/${sectionId}/share`, {}, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error sharing section:', error);
+        throw error;
+    }
+};
+
+export const getSharedSection = async (token) => {
+    const response = await apiClient.get(`/sections/shared/${token}`);
+    return response.data;
 };
 
 apiClient.interceptors.response.use(

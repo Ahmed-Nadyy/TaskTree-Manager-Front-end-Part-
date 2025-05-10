@@ -38,18 +38,15 @@ export default function Navbar() {
         } else {
             document.documentElement.classList.remove('dark');
         }
-    };
-
-    const handleLogout = async () => {
-        console.log('Logout button clicked'); 
+    };    const handleLogout = async () => {
         try {
             await logoutUser(); 
             dispatch(logout()); 
             localStorage.removeItem('authToken'); 
             localStorage.removeItem('user'); 
-            navigate('/login');
+            navigate('/');
         } catch (error) {
-            console.log('Logout failed:', error);
+            console.error('Logout failed:', error);
         }
     };
 

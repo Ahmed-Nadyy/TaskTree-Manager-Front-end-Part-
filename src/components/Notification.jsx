@@ -1,14 +1,44 @@
 import { notification } from 'antd';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheckCircle, faExclamationCircle, faInfoCircle, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 
-const showNotification = (type, message, description = '') => {
+export const showNotification = (type, message, description) => {
     notification[type]({
         message,
         description,
-        className: 'dark:bg-gray-800 dark:text-gray-200',
-        style: {
-            borderRadius: '8px',
-        },
+        placement: 'topRight',
+        duration: 4.5,
     });
+};
+
+export const showTaskAssignmentNotification = (assignedEmails) => {
+    notification.success({
+        message: 'Task Assigned Successfully',
+        description: `Task has been assigned to ${assignedEmails.length} team member${assignedEmails.length > 1 ? 's' : ''}.`,
+        icon: <FontAwesomeIcon icon={faUserPlus} className="text-blue-500" />,
+        placement: 'topRight',
+        duration: 4.5,
+    });
+};
+
+export const showShareNotification = (success, message) => {
+    if (success) {
+        notification.success({
+            message: 'Section Shared',
+            description: message || 'Share link has been copied to clipboard.',
+            icon: <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />,
+            placement: 'topRight',
+            duration: 4.5,
+        });
+    } else {
+        notification.error({
+            message: 'Share Failed',
+            description: message || 'Failed to share section. Please try again.',
+            icon: <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500" />,
+            placement: 'topRight',
+            duration: 4.5,
+        });
+    }
 };
 
 export const notifySuccess = (message, description) => {
