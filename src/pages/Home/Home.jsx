@@ -160,8 +160,8 @@ export default function Home() {
                 const sectionsData = await getSections(user.id, token);
                 setSections(sectionsData);
             } catch (error) {
-                console.error("Error fetching sections:", error);
-                notifyError(error.message || 'Failed to load sections. Please try again.');
+                // console.error("Error fetching sections:", error);
+                // notifyError(error.message || 'Failed to load sections. Please try again.');
             } finally {
                 setIsLoadingSections(false);
             }
