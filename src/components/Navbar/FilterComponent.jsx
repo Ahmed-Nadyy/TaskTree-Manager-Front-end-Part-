@@ -44,10 +44,10 @@ export default function FilterComponent() {
                 }
             } catch (error) {
                 console.error("Error fetching sections:", error);
-                notification.error({
-                    message: 'Error',
-                    description: 'Failed to load sections for filtering',
-                });
+                // notification.error({
+                //     message: 'Error',
+                //     description: 'Failed to load sections for filtering',
+                // });
             }
         };
         
