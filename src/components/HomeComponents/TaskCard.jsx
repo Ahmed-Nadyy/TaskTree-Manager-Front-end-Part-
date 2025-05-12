@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { notification } from 'antd';
 import { shareSection } from '../../apiService';
 
-export default function TaskCard({ tasks, handleIsDone, userId, section, handleUpdateTask, handleDeleteTask }) {
+export default function TaskCard({ tasks, handleIsDone, userId, section, handleUpdateTask, handleDeleteTask, processingIds = [] }) {
     const [hoveredTaskId, setHoveredTaskId] = useState(null);
     const [animatedTasks, setAnimatedTasks] = useState([]);
     const [editModalOpen, setEditModalOpen] = useState(false);
@@ -143,6 +143,17 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                             style={{ transitionDelay: `${tasks.indexOf(task) * 50}ms` }}
                             role="article"
                             aria-label={`Task: ${task.name}`}
+                            tabIndex="0"
+                            onKeyDown={(e) => {
+                                // Handle keyboard navigation within task card
+                                if (e.key === 'Enter') {
+                                    // Open subtasks view on Enter key
+                                    window.location.href = `/task/${userId}/${section._id}/${task._id}`;
+                                }
+                            }}
+                            aria-roledescription="Task card"
+                            aria-busy={isSubmitting}
+                            aria-describedby={`task-description-${task._id}`}
                         >
                             <div className="flex justify-between items-center mb-3">
                                 <h2 className={`text-xl font-semibold ${
@@ -181,16 +192,35 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                                 : "text-gray-400 dark:text-gray-500"
                                             } hover:scale-110 transition-transform duration-200`}
                                         title={task.isDone ? "Mark as incomplete" : "Mark as complete"}
+                                        aria-label={task.isDone ? "Mark task as incomplete" : "Mark task as complete"}
+                                        aria-pressed={task.isDone}
+                                        disabled={processingIds.includes(task._id)} // Disable if processing
                                     >
-                                        <FontAwesomeIcon icon={task.isDone ? faCheckCircle : faCircle} size="lg" />
+                                        {processingIds.includes(task._id) ? (
+                                            <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                        ) : (
+                                            <FontAwesomeIcon icon={task.isDone ? faCheckCircle : faCircle} size="lg" />
+                                        )}
                                     </button>
                                     
                                     <button
                                         onClick={(e) => handleEditClick(e, task)}
                                         className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:scale-110 transition-all duration-200"
                                         title="Edit task"
+                                        aria-label={`Edit task: ${task.name}`}
+                                        disabled={processingIds.includes(task._id)} // Disable if processing
                                     >
-                                        <FontAwesomeIcon icon={faPenToSquare} />
+                                        {processingIds.includes(task._id) ? (
+                                            <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                        ) : (
+                                            <FontAwesomeIcon icon={faPenToSquare} />
+                                        )}
                                     </button>
                                     
                                     <button
@@ -202,16 +232,28 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                         }}
                                         className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:scale-110 transition-all duration-200"
                                         title="Delete task"
+                                        aria-label={`Delete task: ${task.name}`}
+                                        disabled={processingIds.includes(task._id)} // Disable if processing
                                     >
-                                        <FontAwesomeIcon icon={faTrash} />
+                                        {processingIds.includes(task._id) ? (
+                                            <svg className="animate-spin h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                        ) : (
+                                            <FontAwesomeIcon icon={faTrash} />
+                                        )}
                                     </button>
                                 </div>
                             </div>
-                            <p className={`text-gray-600 dark:text-gray-400 mb-4 ${
+                            <p 
+                                id={`task-description-${task._id}`}
+                                className={`text-gray-600 dark:text-gray-400 mb-4 ${
                                 task.isDone ? "opacity-70" : ""
                                 } transition-all duration-200 ${
                                 hoveredTaskId === task._id ? "text-gray-800 dark:text-gray-300" : ""
-                                }`}>
+                                }`}
+                            >
                                 {task.description || "No description provided"}
                             </p>
                             
@@ -288,7 +330,15 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                     href={`/task/${userId}/${section._id}/${task._id}`}
                                     className="inline-flex items-center justify-center px-4 py-2 bg-gray-800 dark:bg-gray-700 text-white rounded-lg
                                         hover:bg-gray-900 dark:hover:bg-gray-600 transition-colors duration-300 shadow-button hover:shadow-button-hover"
-                                    aria-label="View subtasks for this task"
+                                    aria-label={`View subtasks for ${task.name}`}
+                                    role="button"
+                                    tabIndex="0"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            window.location.href = `/task/${userId}/${section._id}/${task._id}`;
+                                        }
+                                    }}
                                 >
                                     View Subtasks
                                 </a>
@@ -330,6 +380,9 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                         className="w-full mt-4 py-2 px-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 
                             rounded-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 
                             transition-all duration-300 sm:hidden"
+                        aria-expanded={isExpanded}
+                        aria-controls="task-list"
+                        aria-label={isExpanded ? 'Show fewer tasks' : `Show ${tasks.length - visibleTasks} more tasks`}
                     >
                         <span className="mr-2">
                             {isExpanded ? 'Show Less' : `Show ${tasks.length - visibleTasks} More Tasks`}
@@ -347,12 +400,20 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
 
             {/* Edit Task Modal */}
             {editModalOpen && editingTask && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white dark:bg-dark-bg rounded-lg p-6 w-96 max-w-[90%]">
-                        <h2 className="text-xl font-semibold mb-4 dark:text-gray-200">Edit Task</h2>
+                <div 
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="edit-task-title"
+                >
+                    <div 
+                        className="bg-white dark:bg-dark-bg rounded-lg p-6 w-96 max-w-[90%]"
+                        tabIndex="-1"
+                    >
+                        <h2 id="edit-task-title" className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Edit Task</h2>
                         <form onSubmit={handleEditSubmit}>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Task Name
                                 </label>
                                 <input
@@ -366,7 +427,7 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                             </div>
                             
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Description
                                 </label>
                                 <textarea
@@ -379,7 +440,7 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                             </div>
 
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Priority
                                 </label>
                                 <select
@@ -395,7 +456,7 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                             </div>
 
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Due Date
                                 </label>
                                 <input
@@ -415,12 +476,12 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                         onChange={(e) => setEditingTask({...editingTask, isImportant: e.target.checked})}
                                         className="mr-2 dark:bg-gray-800 dark:border-gray-700"
                                     />
-                                    <span className="text-sm font-medium text-gray-700">Mark as Important</span>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Mark as Important</span>
                                 </label>
                             </div>
 
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Tags (comma separated)
                                 </label>
                                 <input
@@ -442,16 +503,26 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                     onClick={() => {
                                         setEditModalOpen(false);
                                         setEditingTask(null);
+                                        setError(null); // Clear error on cancel
                                     }}
-                                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                                    className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                    aria-label="Cancel editing task"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                                    className={`px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-md hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    aria-label="Save task changes"
+                                    disabled={isSubmitting}
                                 >
-                                    {isSubmitting ? 'Saving...' : 'Save Changes'}
+                                    {isSubmitting ? (
+                                        <svg className="animate-spin h-5 w-5 mr-3 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    ) : null}
+                                    Save Changes
                                 </button>
                             </div>
                         </form>

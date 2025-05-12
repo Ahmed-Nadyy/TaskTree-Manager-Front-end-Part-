@@ -145,11 +145,11 @@ export default function FilterComponent() {
             >
                 <FontAwesomeIcon 
                     icon={faFilter} 
-                    className={`w-5 h-5 transition-transform duration-200 hover:scale-110 ${activeFiltersCount > 0 ? 'text-blue-500 dark:text-blue-400' : ''}`} 
+                    className={`w-5 h-5 transition-transform duration-200 hover:scale-110 ${activeFiltersCount > 0 ? 'text-blue-600 dark:text-blue-500 font-bold' : ''}`} 
                 />
-                <span className="text-sm hidden sm:inline">Filter</span>
+                <span className={`text-sm hidden sm:inline ${activeFiltersCount > 0 ? 'font-semibold' : ''}`}>Filter</span>
                 {activeFiltersCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" aria-live="polite">
                         {activeFiltersCount}
                     </span>
                 )}
@@ -157,7 +157,7 @@ export default function FilterComponent() {
             
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-50 p-4 border border-gray-200 dark:border-gray-700 animate-fade-in">
-                    <div className="flex justify-between items-center mb-3">
+                    <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filters</h3>
                         <button 
                             onClick={handleClearFilters}
@@ -168,7 +168,7 @@ export default function FilterComponent() {
                     </div>
                     
                     {/* Section Filter */}
-                    <div className="mb-3">
+                    <div className="mb-4">
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             <FontAwesomeIcon icon={faLayerGroup} />
                             Section
@@ -187,7 +187,7 @@ export default function FilterComponent() {
                     </div>
                     
                     {/* Status Filter */}
-                    <div className="mb-3">
+                    <div className="mb-4">
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             <FontAwesomeIcon icon={faCheckCircle} />
                             Status
@@ -205,7 +205,7 @@ export default function FilterComponent() {
                     </div>
                     
                     {/* Priority Filter */}
-                    <div className="mb-3">
+                    <div className="mb-4">
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             <FontAwesomeIcon icon={faFlag} />
                             Priority
@@ -224,7 +224,7 @@ export default function FilterComponent() {
                     </div>
                     
                     {/* Due Date Range Filter */}
-                    <div className="mb-3">
+                    <div className="mb-4">
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             <FontAwesomeIcon icon={faCalendarAlt} />
                             Due Date Range
@@ -250,7 +250,7 @@ export default function FilterComponent() {
                     </div>
                     
                     {/* Tags Filter */}
-                    <div className="mb-3">
+                    <div className="mb-4">
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             <FontAwesomeIcon icon={faTag} />
                             Tags
@@ -271,27 +271,37 @@ export default function FilterComponent() {
                                 </span>
                             ))}
                         </div>
-                        <div className="flex">
+                        <div className="relative flex items-center">
                             <input 
                                 type="text" 
                                 value={tagInput}
                                 onChange={handleTagInputChange}
                                 onKeyDown={handleTagInputKeyDown}
                                 className="flex-1 p-2 text-sm border rounded-l-md focus:ring-2 focus:ring-blue-500
-                                    dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    dark:bg-gray-700 dark:border-gray-600 dark:text-white pr-8"
                                 placeholder="Add a tag..."
                             />
+                            {tagInput && (
+                                <button 
+                                    type="button"
+                                    onClick={() => setTagInput('')}
+                                    className="absolute right-12 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                                    aria-label="Clear tag input"
+                                >
+                                    <FontAwesomeIcon icon={faXmark} className="w-3 h-3"/>
+                                </button>
+                            )}
                             <button
                                 onClick={() => addTag(tagInput.trim())}
                                 disabled={!tagInput.trim()}
-                                className="bg-blue-500 text-white px-3 rounded-r-md hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                className="bg-blue-500 text-white px-3 py-2 rounded-r-md hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:text-gray-500 dark:disabled:text-gray-400 disabled:cursor-not-allowed text-sm"
                             >
                                 Add
                             </button>
                         </div>
                     </div>
                     
-                    <div className="pt-2 border-t border-gray-200 dark:border-gray-700 mt-2 flex gap-2">
+                    <div className="pt-3 border-t border-gray-200 dark:border-gray-700 mt-4 flex gap-2">
                         <button 
                             onClick={handleClearFilters}
                             className="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-md

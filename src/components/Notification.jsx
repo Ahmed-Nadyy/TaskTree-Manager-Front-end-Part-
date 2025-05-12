@@ -2,10 +2,11 @@ import { notification } from 'antd';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckCircle, faExclamationCircle, faInfoCircle, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 
-export const showNotification = (type, message, description) => {
+export const showNotification = (type, message, description, icon) => {
     notification[type]({
         message,
         description,
+        icon,
         placement: 'topRight',
         duration: 4.5,
     });
@@ -42,17 +43,17 @@ export const showShareNotification = (success, message) => {
 };
 
 export const notifySuccess = (message, description) => {
-    showNotification('success', message, description);
+    showNotification('success', message, description, <FontAwesomeIcon icon={faCheckCircle} className="text-green-500 dark:text-green-400" />);
 };
 
 export const notifyError = (message, description) => {
-    showNotification('error', message, description);
+    showNotification('error', message, description, <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500 dark:text-red-400" />);
 };
 
 export const notifyWarning = (message, description) => {
-    showNotification('warning', message, description);
+    showNotification('warning', message, description, <FontAwesomeIcon icon={faExclamationCircle} className="text-yellow-500 dark:text-yellow-400" />); // Using ExclamationCircle for warning too, or choose another like faExclamationTriangle
 };
 
 export const notifyInfo = (message, description) => {
-    showNotification('info', message, description);
+    showNotification('info', message, description, <FontAwesomeIcon icon={faInfoCircle} className="text-blue-500 dark:text-blue-400" />);
 };

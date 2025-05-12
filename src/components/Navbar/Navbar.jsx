@@ -54,20 +54,23 @@ export default function Navbar() {
         <>
             <nav className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-colors duration-200">
                 <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-                    <span className="self-center text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-200">
+                    <a href="/dashboard" className="self-center text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-200">
                         Task Tree
-                    </span>
+                    </a>
                     <div className="flex md:order-2 items-center gap-4">
                         <button
                             onClick={handleDarkModeToggle}
                             className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 
-                                rounded-lg transition-colors duration-200"
+                                rounded-lg transition-colors duration-200 relative group"
                             aria-label="Toggle dark mode"
                         >
                             <FontAwesomeIcon 
                                 icon={darkMode ? faSun : faMoon} 
                                 className="w-5 h-5 transition-transform duration-200 hover:scale-110" 
                             />
+                            <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
+                                {darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                            </span>
                         </button>
                         <NavSearch 
                             toggleMobileSearch={toggleMobileSearch} 
@@ -97,7 +100,7 @@ export default function Navbar() {
                                 />
                             </svg>
                         </button>
-                        <div className="hidden sm:block">
+                        <div onClick={handleLogout} className="hidden sm:block">
                             <Btn title="Logout" onClick={handleLogout} />
                         </div>
                     </div>

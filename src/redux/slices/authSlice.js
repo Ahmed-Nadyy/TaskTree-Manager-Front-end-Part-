@@ -7,11 +7,23 @@ const getDarkModeFromStorage = () => {
     return darkMode === 'true';
 };
 
+// Helper function to safely parse JSON
+const safeJSONParse = (str) => {
+    try {
+        return str ? JSON.parse(str) : null;
+    } catch (e) {
+        console.warn('Failed to parse JSON from localStorage:', e);
+        return null;
+    }
+};
+
 const initialState = {
     isAuthenticated: !!localStorage.getItem('authToken'),
     token: localStorage.getItem('authToken') || null,
-    user: JSON.parse(localStorage.getItem('user')) || null,
+    user: safeJSONParse(localStorage.getItem('user')),
     darkMode: getDarkModeFromStorage(),
+    status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+    error: null,    // string | null
 };
 
 export const initializeAuth = createAsyncThunk(
@@ -74,10 +86,22 @@ const authSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(initializeAuth.rejected, (state) => {
+            .addCase(initializeAuth.pending, (state) => {
+                state.status = 'loading';
+                state.error = null;
+            })
+            .addCase(initializeAuth.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                // If initializeAuth was successful due to a valid token,
+                // loginSuccess would have been dispatched, setting isAuthenticated and user.
+                // If no token, it returns early, and state remains as is (potentially unauthenticated).
+            })
+            .addCase(initializeAuth.rejected, (state, action) => {
+                state.status = 'failed';
                 state.isAuthenticated = false;
                 state.user = null;
                 state.token = null;
+                state.error = action.error.message || 'Failed to initialize auth';
                 // Don't reset dark mode on auth rejection
             });
     }

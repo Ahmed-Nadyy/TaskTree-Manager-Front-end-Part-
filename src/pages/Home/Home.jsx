@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { getSections, addSection, addTask, deleteSection, updateTask, deleteTask, markTaskAsDone, shareSection } from '../../apiService';
 import { setSection } from '../../redux/slices/filterSlice';
@@ -29,6 +30,8 @@ export default function Home() {
     const [sectionClicked, setSectionClicked] = useState(null);
     const [newSec, setNewSec] = useState({ name: "" });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoadingSections, setIsLoadingSections] = useState(true); // Added for initial load
+    const [processingIds, setProcessingIds] = useState([]); // To track IDs of items being processed
     const [newTask, setNewTask] = useState({
         name: "",
         description: "",
@@ -53,6 +56,7 @@ export default function Home() {
     const userRole = user?.role || 'solo';
     const filterState = useSelector((state) => state.filter);
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     // Filter tasks based on filter criteria
     const filterTasks = (tasks, sectionId) => {
@@ -145,12 +149,21 @@ export default function Home() {
             return;
         }
         const fetchSections = async () => {
+            setIsLoadingSections(true);
             try {
-                if (!user?.id) { console.log("err", user); return; }
+                if (!user?.id) {
+                    console.log("User ID not available for fetching sections", user);
+                    notifyError("User session error. Please try logging in again.");
+                    setIsLoadingSections(false);
+                    return;
+                }
                 const sectionsData = await getSections(user.id, token);
                 setSections(sectionsData);
             } catch (error) {
                 console.error("Error fetching sections:", error);
+                notifyError(error.message || 'Failed to load sections. Please try again.');
+            } finally {
+                setIsLoadingSections(false);
             }
         };
 
@@ -158,11 +171,12 @@ export default function Home() {
             fetchSections();
         }
 
-    }, [isAuthenticated, user]);
+    }, [isAuthenticated, user, token, navigate]); // Added token and navigate to dependency array
 
     const handleTaskIsDone = async (taskId, sectionId, isChecked) => {
         // Store the original sections state for rollback
         const originalSections = [...sections];
+        setProcessingIds(prev => [...prev, taskId]); // Add task ID to processing list
         try {
             // Optimistic update
             setSections(prevSections => prevSections.map(section =>
@@ -184,6 +198,8 @@ export default function Home() {
             setSections(originalSections);
             notifyError('Failed to update task status');
             console.error('Error updating task status:', error);
+        } finally {
+            setProcessingIds(prev => prev.filter(id => id !== taskId)); // Remove task ID
         }
     };
 
@@ -192,6 +208,7 @@ export default function Home() {
 
         // Store original state for rollback
         const originalSections = [...sections];
+        setProcessingIds(prev => [...prev, sectionId]); // Add section ID
         try {
             // Optimistic delete
             setSections(prevSections => prevSections.filter(section => section._id !== sectionId));
@@ -202,6 +219,8 @@ export default function Home() {
             setSections(originalSections);
             notifyError('Failed to delete section');
             console.error('Error deleting section:', error);
+        } finally {
+            setProcessingIds(prev => prev.filter(id => id !== sectionId)); // Remove section ID
         }
     };
 
@@ -309,6 +328,7 @@ export default function Home() {
 
     const handleUpdateTask = async (taskId, sectionId, updatedData) => {
         const originalSections = [...sections];
+        setProcessingIds(prev => [...prev, taskId]); // Add task ID
         try {
             // Optimistic update
             setSections(prevSections =>
@@ -334,6 +354,8 @@ export default function Home() {
             notifyError('Failed to update task');
             console.error('Error updating task:', error);
             throw error; // Re-throw to handle in the component
+        } finally {
+            setProcessingIds(prev => prev.filter(id => id !== taskId)); // Remove task ID
         }
     };
 
@@ -341,6 +363,7 @@ export default function Home() {
         if (!window.confirm('Are you sure you want to delete this task?')) return;
 
         const originalSections = [...sections];
+        setProcessingIds(prev => [...prev, taskId]); // Add task ID
         try {
             // Optimistic delete
             setSections(sections =>
@@ -361,6 +384,8 @@ export default function Home() {
             setSections(originalSections);
             notifyError('Failed to delete task');
             console.error('Error deleting task:', error);
+        } finally {
+            setProcessingIds(prev => prev.filter(id => id !== taskId)); // Remove task ID
         }
     };
 
@@ -388,7 +413,13 @@ export default function Home() {
         <>
             <Navbar />
             <div className="px-6 min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-                {sections.length === 0 && (
+                {isLoadingSections && (
+                    <div className="flex flex-col items-center justify-center h-screen">
+                        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+                        <p className="sm:text-2xl text-lg text-gray-700 dark:text-gray-300 mt-4">Loading sections...</p>
+                    </div>
+                )}
+                {!isLoadingSections && sections.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-screen">
                         <p className="sm:text-2xl text-lg text-gray-700 dark:text-gray-300">You haven't created any sections yet</p>
                         <button
@@ -555,6 +586,7 @@ export default function Home() {
                                         section={section}
                                         handleUpdateTask={handleUpdateTask}
                                         handleDeleteTask={handleDeleteTask}
+                                        processingIds={processingIds} // Pass down processing IDs
                                     />
                                 </div>
                             );
@@ -735,8 +767,15 @@ export default function Home() {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-md hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
+                                        className={`px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-md hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        disabled={isSubmitting}
                                     >
+                                        {isSubmitting ? (
+                                            <svg className="animate-spin h-5 w-5 mr-3 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                        ) : null}
                                         Create Task
                                     </button>
                                 </div>
@@ -771,9 +810,15 @@ export default function Home() {
                                 </button>
                                 <button
                                     onClick={handleCreateSection}
-                                    className="text-white bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 
-                                        dark:hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors duration-200"
+                                    className={`text-white bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors duration-200 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    disabled={isSubmitting}
                                 >
+                                    {isSubmitting ? (
+                                        <svg className="animate-spin h-5 w-5 mr-3 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    ) : null}
                                     Create
                                 </button>
                             </div>

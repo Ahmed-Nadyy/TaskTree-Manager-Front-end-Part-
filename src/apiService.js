@@ -42,7 +42,7 @@ export const getSections = async (userId) => {
         return response.data;
     } catch (error) {
         console.error('Error fetching sections:', error);
-        throw new Error('Failed to fetch sections');
+        throw new Error(error.response?.data?.message || 'Failed to fetch sections. Please try again.');
     }
 };
 
@@ -57,7 +57,7 @@ export const addSection = async (sectionData) => {
         return response.data;
     } catch (error) {
         console.error('Error adding section:', error);
-        throw new Error('Failed to add section');
+        throw new Error(error.response?.data?.message || 'Failed to add section. Please try again.');
     }
 };
 
@@ -83,7 +83,7 @@ export const addTask = async (sectionId, taskData) => {
         return response.data;
     } catch (error) {
         console.error('Error adding task:', error);
-        throw new Error('Failed to add task');
+        throw new Error(error.response?.data?.message || 'Failed to add task. Please try again.');
     }
 };
 
@@ -98,7 +98,7 @@ export const deleteSection = async (sectionId) => {
         return response.data;
     } catch (error) {
         console.error('Error deleting section:', error);
-        throw new Error('Failed to delete section');
+        throw new Error(error.response?.data?.message || 'Failed to delete section. Please try again.');
     }
 };
 
@@ -148,7 +148,7 @@ export const updateTask = async (sectionId, taskId, updates) => {
         return response.data;
     } catch (error) {
         console.error('Error updating task:', error);
-        throw new Error('Failed to update task');
+        throw new Error(error.response?.data?.message || 'Failed to update task. Please try again.');
     }
 };
 
@@ -173,7 +173,7 @@ export const deleteTask = async (sectionId, taskId) => {
         return response.data;
     } catch (error) {
         console.error('Error deleting task:', error);
-        throw new Error('Failed to delete task');
+        throw new Error(error.response?.data?.message || 'Failed to delete task. Please try again.');
     }
 };
 
@@ -188,7 +188,7 @@ export const addSubTask = async (sectionId, taskId, subTaskData) => {
         return response.data;
     } catch (error) {
         console.error('Error adding subtask:', error);
-        throw new Error('Failed to add subtask');
+        throw new Error(error.response?.data?.message || 'Failed to add subtask. Please try again.');
     }
 };
 
@@ -203,7 +203,7 @@ export const updateSubTask = async (sectionId, taskId, subTaskId, updates) => {
         return response.data;
     } catch (error) {
         console.error('Error updating subtask:', error);
-        throw new Error('Failed to update subtask');
+        throw new Error(error.response?.data?.message || 'Failed to update subtask. Please try again.');
     }
 };
 
@@ -218,7 +218,7 @@ export const deleteSubTask = async (sectionId, taskId, subTaskId) => {
         return response.data;
     } catch (error) {
         console.error('Error deleting subtask:', error);
-        throw new Error('Failed to delete subtask');
+        throw new Error(error.response?.data?.message || 'Failed to delete subtask. Please try again.');
     }
 };
 
@@ -240,7 +240,7 @@ export const markTaskAsDone = async (sectionId, taskId, isDone = true) => {
         return response.data;
     } catch (error) {
         console.error(`Error marking task as ${isDone ? 'done' : 'undone'}:`, error);
-        throw new Error(`Failed to mark task as ${isDone ? 'done' : 'undone'}`);
+        throw new Error(error.response?.data?.message || `Failed to mark task as ${isDone ? 'done' : 'undone'}. Please try again.`);
     }
 };
 
@@ -257,7 +257,7 @@ export const markSubTaskAsDone = async (sectionId, taskId, subTaskId) => {
         return response.data;
     } catch (error) {
         console.error('Error marking subtask as done:', error);
-        throw new Error('Failed to mark subtask as done');
+        throw new Error(error.response?.data?.message || 'Failed to mark subtask as done. Please try again.');
     }
 };
 
@@ -273,13 +273,23 @@ export const updateDarkMode = async (darkMode) => {
         return response.data;
     } catch (error) {
         console.error('Error updating dark mode:', error);
-        throw new Error('Failed to update dark mode preference');
+        throw new Error(error.response?.data?.message || 'Failed to update dark mode preference. Please try again.');
     }
 };
 
 export const assignTask = async (taskId, sectionId, emails) => {
-    const response = await apiClient.post(`/tasks/${taskId}/assign`, { emails, sectionId });
-    return response.data;
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.post(`/tasks/${taskId}/assign`, { emails, sectionId }, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error assigning task:', error);
+        throw new Error(error.response?.data?.message || 'Failed to assign task. Please try again.');
+    }
 };
 
 export const shareSection = async (sectionId) => {
@@ -293,13 +303,18 @@ export const shareSection = async (sectionId) => {
         return response.data;
     } catch (error) {
         console.error('Error sharing section:', error);
-        throw error;
+        throw new Error(error.response?.data?.message || 'Failed to share section. Please try again.');
     }
 };
 
 export const getSharedSection = async (token) => {
-    const response = await apiClient.get(`/sections/shared/${token}`);
-    return response.data;
+    try {
+        const response = await apiClient.get(`/sections/shared/${token}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching shared section:', error);
+        throw new Error(error.response?.data?.message || 'Failed to fetch shared section. Please try again.');
+    }
 };
 
 apiClient.interceptors.response.use(
