@@ -192,7 +192,24 @@ export const addSubTask = async (sectionId, taskId, subTaskData) => {
     }
 };
 
+export const togglePublicView = async (sectionId) => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.put(`/sections/${sectionId}/toggle-public-view`, {}, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error toggling public view:', error);
+        throw new Error(error.response?.data?.message || 'Failed to toggle public view. Please try again.');
+    }
+};
+
 export const updateSubTask = async (sectionId, taskId, subTaskId, updates) => {
+
+
     try {
         const token = localStorage.getItem('authToken');
         const response = await apiClient.put(`/subtasks/${sectionId}/${taskId}/${subTaskId}`, updates, {

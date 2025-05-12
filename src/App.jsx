@@ -8,6 +8,7 @@ import SignUp from "./pages/SignUp/SignUp";
 import TaskDetails from "./components/HomeComponents/TaskDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
+import SharedSectionPage from './pages/SharedSectionPage'; // Import the new page
 
 export default function App() {
   const dispatch = useDispatch();
@@ -32,7 +33,7 @@ export default function App() {
             <Route path="/dashboard" element={<ProtectedRoute><Home /></ProtectedRoute>} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/task/:userId/:sectionId/:taskId" element={<ProtectedRoute><TaskDetails /></ProtectedRoute>} />
-            <Route path="/shared/:token" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+            <Route path="/shared/:shareToken" element={<SharedSectionPage />} /> {/* New route for publicly shared sections */}
             <Route path="*" element={
               <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 text-center px-4">
                 {/* Optional: Add a relevant icon */}

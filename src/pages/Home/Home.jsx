@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { getSections, addSection, addTask, deleteSection, updateTask, deleteTask, markTaskAsDone, shareSection } from '../../apiService';
+import { getSections, addSection, addTask, deleteSection, updateTask, deleteTask, markTaskAsDone, shareSection, togglePublicView as apiTogglePublicView } from '../../apiService';
 import { setSection } from '../../redux/slices/filterSlice';
 import ProtectedRoute from '../../components/ProtectedRoute.jsx';
 import TaskCard from '../../components/HomeComponents/TaskCard.jsx';
 import Navbar from '../../components/Navbar/Navbar.jsx';
 import { notification } from 'antd';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShare } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEyeSlash, faFaceRollingEyes, faShare } from '@fortawesome/free-solid-svg-icons';
 
 // Add custom animation styles
 const animationStyles = `
@@ -44,6 +44,7 @@ export default function Home() {
     });
     const [emailInput, setEmailInput] = useState('');
     const [assignedEmails, setAssignedEmails] = useState([]);
+
 
     // Add animation styles to document head
     useEffect(() => {
@@ -140,6 +141,25 @@ export default function Home() {
             message: 'Error',
             description: message,
         });
+    };
+
+    const fetchSections = async () => {
+        setIsLoadingSections(true);
+        try {
+            if (!user?.id) {
+                console.log("User ID not available for fetching sections", user);
+                notifyError("User session error. Please try logging in again.");
+                setIsLoadingSections(false);
+                return;
+            }
+            const sectionsData = await getSections(user.id, token);
+            setSections(sectionsData);
+        } catch (error) {
+            console.error("Error fetching sections:", error);
+            notifyError(error.message || 'Failed to load sections. Please try again.');
+        } finally {
+            setIsLoadingSections(false);
+        }
     };
 
     useEffect(() => {
@@ -409,6 +429,33 @@ export default function Home() {
         }
     };
 
+    const handleTogglePublicView = async (sectionId) => {
+        const originalSections = [...sections];
+        setProcessingIds(prev => [...prev, sectionId + '-toggle']);
+        try {
+            // Optimistic update
+            setSections(prevSections =>
+                prevSections.map(s =>
+                    s._id === sectionId ? { ...s, isPubliclyViewable: !s.isPubliclyViewable } : s
+                )
+            );
+            const updatedSection = await apiTogglePublicView(sectionId);
+            // Update with actual data from server if needed, though optimistic should be fine
+            setSections(prevSections =>
+                prevSections.map(s =>
+                    s._id === sectionId ? { ...s, isPubliclyViewable: updatedSection.section.isPubliclyViewable } : s
+                )
+            );
+            notifySuccess(`Section visibility updated to ${updatedSection.isPubliclyViewable ? 'public' : 'private'}`);
+        } catch (error) {
+            setSections(originalSections);
+            notifyError('Failed to update section visibility.');
+            console.error('Error toggling public view:', error);
+        } finally {
+            setProcessingIds(prev => prev.filter(id => id !== sectionId + '-toggle'));
+        }
+    };
+
     return (
         <>
             <Navbar />
@@ -547,6 +594,30 @@ export default function Home() {
                                                                 Delete Section
                                                             </button>
                                                         </li>
+                                                        {(user?.role === 'team' || user?.role === 'company') && (
+                                                            <li className="border-t border-gray-200 dark:border-gray-700 my-1"></li>
+                                                        )}
+                                                        {(user?.role === 'team' || user?.role === 'company') && (
+                                                        <li>
+                                                            <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 flex items-center justify-between">
+                                                                <span>Publicly Viewable</span>
+                                                                <label htmlFor={`toggle-public-${section._id}`} className="flex items-center cursor-pointer">
+                                                                    <div className="relative">
+                                                                        <input 
+                                                                            type="checkbox" 
+                                                                            id={`toggle-public-${section._id}`} 
+                                                                            className="sr-only" 
+                                                                            checked={section.isPubliclyViewable || false}
+                                                                            onChange={() => handleTogglePublicView(section._id)}
+                                                                            disabled={processingIds.includes(section._id + '-toggle')}
+                                                                        />
+                                                                        <div className={`block w-10 h-6 rounded-full transition-colors ${section.isPubliclyViewable ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                                                                        <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${section.isPubliclyViewable ? 'translate-x-full' : ''}`}></div>
+                                                                    </div>
+                                                                </label>
+                                                            </div>
+                                                        </li>
+                                                        )}
                                                     </ul>
                                                 </div>
                                             )}
@@ -567,6 +638,7 @@ export default function Home() {
                                         </button>
 
                                         {(user?.role === 'team' || user?.role === 'company') && (
+                                            <div className="flex justify-center items-center">
                                             <button
                                                 onClick={() => handleShareSection(section._id)}
                                                 className="flex items-center gap-2 text-blue-500 hover:text-blue-700 
@@ -577,6 +649,9 @@ export default function Home() {
                                                 <FontAwesomeIcon icon={faShare} />
                                                 <span className="hidden sm:inline">Share</span>
                                             </button>
+                                            {section.isPubliclyViewable ? <span className="text-green-700 font-bold"><FontAwesomeIcon icon={faEye} /></span >:<span className="text-red-700 font-bold"><FontAwesomeIcon icon={faEyeSlash} /></span>}
+
+                                            </div>
                                         )}
                                     </div>
                                     <TaskCard
