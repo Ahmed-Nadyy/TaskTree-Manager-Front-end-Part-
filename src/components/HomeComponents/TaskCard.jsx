@@ -15,6 +15,7 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
     const [isExpanded, setIsExpanded] = useState(false);
     const [visibleTasks, setVisibleTasks] = useState(3);
     const [showShareModal, setShowShareModal] = useState(false);
+    const [emailInputForEdit, setEmailInputForEdit] = useState(''); // New state for email input in edit modal
     // Get user data from Redux store
     const user = useSelector(state => state.auth.user);
     const userRole = user?.role || 'solo';
@@ -66,9 +67,37 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
 
     const handleEditClick = (e, task) => {
         e.stopPropagation();
-        setEditingTask({ ...task });
+        setEditingTask({ 
+            ...task,
+            assignedTo: task.assignedTo ? [...task.assignedTo] : [] // Ensure assignedTo is an array
+        });
+        setEmailInputForEdit(''); // Reset email input when opening modal
         setEditModalOpen(true);
         setError(null);
+    };
+
+    const handleAddEmailToEditTask = () => {
+        if (emailInputForEdit && emailInputForEdit.includes('@') && editingTask) {
+            const alreadyAssigned = editingTask.assignedTo.some(user => user.email === emailInputForEdit);
+            if (!alreadyAssigned) {
+                setEditingTask(prev => ({
+                    ...prev,
+                    assignedTo: [...prev.assignedTo, { email: emailInputForEdit }]
+                }));
+                setEmailInputForEdit('');
+            } else {
+                notification.warn({ message: 'Email already assigned to this task.' });
+            }
+        }
+    };
+
+    const handleRemoveEmailFromEditTask = (emailToRemove) => {
+        if (editingTask) {
+            setEditingTask(prev => ({
+                ...prev,
+                assignedTo: prev.assignedTo.filter(user => user.email !== emailToRemove)
+            }));
+        }
     };
 
     const handleEditSubmit = async (e) => {
@@ -149,8 +178,12 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                 // Handle keyboard navigation within task card
                                 if (e.key === 'Enter') {
                                     // Open subtasks view on Enter key
-                                    window.location.href = `/task/${userId}/${section._id}/${task._id}`;
+                                    window.location.href = `/sections/${section._id}/tasks/${task._id}/subtasks`;
                                 }
+                            }}
+                            onClick={() => {
+                                // Navigate to subtasks view
+                                window.location.href = `/sections/${section._id}/tasks/${task._id}/subtasks`;
                             }}
                             aria-roledescription="Task card"
                             aria-busy={isSubmitting}
@@ -327,7 +360,7 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
 
                             <div className="flex justify-between items-center">
                                 <a
-                                    href={`/task/${userId}/${section._id}/${task._id}`}
+                                    href={`/sections/${section._id}/tasks/${task._id}/subtasks`}
                                     className="inline-flex items-center justify-center px-4 py-2 bg-gray-800 dark:bg-gray-700 text-white rounded-lg
                                         hover:bg-gray-900 dark:hover:bg-gray-600 transition-colors duration-300 shadow-button hover:shadow-button-hover"
                                     aria-label={`View subtasks for ${task.name}`}
@@ -336,7 +369,7 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter' || e.key === ' ') {
                                             e.preventDefault();
-                                            window.location.href = `/task/${userId}/${section._id}/${task._id}`;
+                                            window.location.href = `/sections/${section._id}/tasks/${task._id}/subtasks`;
                                         }
                                     }}
                                 >
@@ -494,6 +527,55 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                         dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
                                 />
                             </div>
+
+                            {/* Assigned Emails Management - START */} 
+                            {(userRole === 'team' || userRole === 'company') && (
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Assign to Team Members
+                                    </label>
+                                    <div className="flex gap-2 mb-2">
+                                        <input
+                                            type="email"
+                                            value={emailInputForEdit}
+                                            onChange={(e) => setEmailInputForEdit(e.target.value)}
+                                            placeholder="Enter team member's email"
+                                            className="flex-1 p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAddEmailToEditTask}
+                                            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                                        >
+                                            Add Email
+                                        </button>
+                                    </div>
+                                    {editingTask.assignedTo && editingTask.assignedTo.length > 0 && (
+                                        <div className="mt-2 space-y-1">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">Currently assigned:</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {editingTask.assignedTo.map((user, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="flex items-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full"
+                                                    >
+                                                        <span>{user.email}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveEmailFromEditTask(user.email)}
+                                                            className="ml-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                                                            aria-label={`Remove ${user.email}`}
+                                                        >
+                                                            &times;
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {/* Assigned Emails Management - END */} 
 
                             <div className="flex justify-end gap-2">
                                 <button

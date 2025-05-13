@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../Navbar/Navbar";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import {
     getSections,
     addSubTask,
@@ -299,7 +299,19 @@ export default function TaskDetails() {
         <>
             <Navbar />
             <div className="w-full min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 pt-10 flex justify-center">
-                <div className="bg-white dark:bg-dark-bg shadow-lg dark:shadow-dark-card rounded-2xl p-6 max-w-lg w-full animate-fade-in-down">
+                <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-gray-800 shadow-xl rounded-lg mt-10 animate-fade-in-down">
+                    <div className="flex justify-between items-center mb-4">
+                        <h1 className="text-4xl font-extrabold text-gray-800 dark:text-white">{taskName}</h1>
+                        {userRole === 'company' && (
+                            <Link 
+                                to={`/sections/${sectionId}/tasks/${taskId}/subtasks`}
+                                className="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 flex items-center"
+                            >
+                                <FontAwesomeIcon icon={faShare} className="mr-2" /> {/* Using faShare as a placeholder, consider a more relevant icon like faTasks or faColumns */}
+                                View Subtasks Board
+                            </Link>
+                        )}
+                    </div>
                     <div className="text-center mb-6">
                         <h1 className="text-4xl font-extrabold text-blue-700 dark:text-blue-400">
                             {taskName} Details

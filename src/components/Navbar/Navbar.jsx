@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 
-export default function Navbar() {
+export default function Navbar({ currentView, setCurrentView }) {
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -75,6 +75,30 @@ export default function Navbar() {
                         <NavSearch 
                             toggleMobileSearch={toggleMobileSearch} 
                         />
+                        {/* View Toggle Buttons - Placed before mobile menu button and logout for better desktop layout */}
+                        {setCurrentView && (
+                            <div className="hidden md:flex items-center space-x-1">
+                                <button
+                                    onClick={() => setCurrentView('home')}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-in-out 
+                                                ${currentView === 'home' 
+                                                    ? 'bg-blue-500 text-white shadow-sm'
+                                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                                >
+                                    Home
+                                </button>
+                                <button
+                                    onClick={() => setCurrentView('shared')}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-in-out 
+                                                ${currentView === 'shared' 
+                                                    ? 'bg-blue-500 text-white shadow-sm' 
+                                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                                >
+                                    Shared
+                                </button>
+                            </div>
+                        )}
+
                         <button
                             onClick={toggleMobileMenu}
                             type="button"
@@ -117,6 +141,8 @@ export default function Navbar() {
                 handleLogout={handleLogout}
                 darkMode={darkMode}
                 onToggleDarkMode={handleDarkModeToggle}
+                currentView={currentView} // Pass to MobileMenu if needed there too
+                setCurrentView={setCurrentView} // Pass to MobileMenu if needed there too
             />
         </>
     );

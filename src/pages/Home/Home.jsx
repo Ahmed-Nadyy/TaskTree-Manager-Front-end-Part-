@@ -32,6 +32,9 @@ export default function Home() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingSections, setIsLoadingSections] = useState(true); // Added for initial load
     const [processingIds, setProcessingIds] = useState([]); // To track IDs of items being processed
+    const [currentView, setCurrentView] = useState('home'); // 'home' or 'shared'
+    const [sharedSections, setSharedSections] = useState([]);
+    const [isLoadingSharedSections, setIsLoadingSharedSections] = useState(false);
     const [newTask, setNewTask] = useState({
         name: "",
         description: "",
@@ -58,6 +61,35 @@ export default function Home() {
     const filterState = useSelector((state) => state.filter);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+
+    const fetchSharedSectionsAndTasks = async () => {
+        if (!user?.id || !token) return;
+        setIsLoadingSharedSections(true);
+        try {
+            // This is a placeholder. You'll need a new API endpoint 
+            // or modify an existing one to fetch sections/tasks specifically shared with the user.
+            // For now, let's assume getSections can be adapted or a new function like getSharedData is available.
+            // const sharedData = await getSharedSectionsForUser(user.id, token); // Hypothetical API call
+            // setSharedSections(sharedData);
+            
+            // For demonstration, let's filter existing sections to simulate shared ones
+            // This needs to be replaced with actual API call and logic for shared items
+            const allSections = await getSections(user.id, token); 
+            const filteredShared = allSections.map(section => ({
+                ...section,
+                tasks: section.tasks.filter(task => 
+                    task.assignedTo && task.assignedTo.some(assignee => assignee.email === user.email) || section.isPubliclyViewable
+                )
+            })).filter(section => section.tasks.length > 0 || section.isPubliclyViewable);
+            setSharedSections(filteredShared);
+
+        } catch (error) {
+            console.error("Error fetching shared sections:", error);
+            notifyError(error.message || 'Failed to load shared items.');
+        } finally {
+            setIsLoadingSharedSections(false);
+        }
+    };
 
     // Filter tasks based on filter criteria
     const filterTasks = (tasks, sectionId) => {
@@ -163,35 +195,41 @@ export default function Home() {
     };
 
     useEffect(() => {
-        // console.log(isAuthenticated, user);
         if (!isAuthenticated) {
             navigate('/');
             return;
         }
-        const fetchSections = async () => {
+
+        const initialDataFetch = async () => {
+            if (!user?.id || !token) {
+                notifyError("User session error. Please try logging in again.");
+                setIsLoadingSections(false);
+                setIsLoadingSharedSections(false);
+                return;
+            }
+
+            // Fetch data for 'home' view
             setIsLoadingSections(true);
             try {
-                if (!user?.id) {
-                    console.log("User ID not available for fetching sections", user);
-                    notifyError("User session error. Please try logging in again.");
-                    setIsLoadingSections(false);
-                    return;
-                }
                 const sectionsData = await getSections(user.id, token);
                 setSections(sectionsData);
             } catch (error) {
-                console.error("Error fetching sections:", error);
-                notifyError(error.message || 'Failed to load sections. Please try again.');
+                console.error("Error fetching sections for Home view:", error);
+                notifyError(error.message || 'Failed to load home sections. Please try again.');
             } finally {
                 setIsLoadingSections(false);
             }
+
+            // Fetch data for 'shared' view
+            // The fetchSharedSectionsAndTasks function already sets its own loading state
+            await fetchSharedSectionsAndTasks(); 
         };
 
         if (isAuthenticated && user?.id) {
-            fetchSections();
+            initialDataFetch();
         }
 
-    }, [isAuthenticated, user, token, navigate]); // Added token and navigate to dependency array
+    }, [isAuthenticated, user, token, navigate]); // Removed currentView from dependencies
 
     const handleTaskIsDone = async (taskId, sectionId, isChecked) => {
         // Store the original sections state for rollback
@@ -458,15 +496,20 @@ export default function Home() {
 
     return (
         <>
-            <Navbar />
-            <div className="px-6 min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-                {isLoadingSections && (
+            <Navbar currentView={currentView} setCurrentView={setCurrentView} />
+            <div className="px-6 min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 pt-4">
+
+            {/* Conditional rendering based on currentView */} 
+            {currentView === 'home' && (
+                <>
+
+                {(isLoadingSections && currentView === 'home') && (
                     <div className="flex flex-col items-center justify-center h-screen">
                         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
                         <p className="sm:text-2xl text-lg text-gray-700 dark:text-gray-300 mt-4">Loading sections...</p>
                     </div>
                 )}
-                {!isLoadingSections && sections.length === 0 && (
+                {!isLoadingSections && currentView === 'home' && sections.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-screen">
                         <p className="sm:text-2xl text-lg text-gray-700 dark:text-gray-300">You haven't created any sections yet</p>
                         <button
@@ -480,7 +523,7 @@ export default function Home() {
                         </button>
                     </div>
                 )}
-                {sections.length > 0 && (
+                {currentView === 'home' && sections.length > 0 && (
                     <div className="flex flex-col">
                         <button
                             type="button"
@@ -508,7 +551,8 @@ export default function Home() {
                                 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity 
                                 duration-300 whitespace-nowrap text-xs pointer-events-none">Add new section</span>
                         </button>
-                        {sections.map((section) => {
+                        {sections.map((section) => { // This is for 'home' view
+
                             // Check if any tasks in this section match the current filter criteria
                             const filteredTasks = filterTasks(section.tasks, section._id);
 
@@ -668,6 +712,63 @@ export default function Home() {
                         })}
                     </div>
                 )}
+                </>
+            )}
+
+                {/* Shared View Content */} 
+ 
+                {currentView === 'shared' && (
+                    <div className="flex flex-col">
+                        {isLoadingSharedSections && (
+                            <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+                                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-green-500"></div>
+                                <p className="sm:text-2xl text-lg text-gray-700 dark:text-gray-300 mt-4">Loading shared items...</p>
+                            </div>
+                        )}
+                        {!isLoadingSharedSections && sharedSections.length === 0 && (
+                            <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+                                <FontAwesomeIcon icon={faFaceRollingEyes} className="text-5xl text-gray-400 dark:text-gray-500 mb-4" />
+                                <p className="sm:text-2xl text-lg text-gray-700 dark:text-gray-300">Nothing is shared with you yet, or no tasks assigned to you in shared sections.</p>
+                            </div>
+                        )}
+                        {!isLoadingSharedSections && sharedSections.length > 0 && sharedSections.map((section) => {
+                            const filteredTasks = filterTasks(section.tasks, section._id);
+                            // In shared view, we only show tasks assigned to the current user or if the section is public
+                            const tasksForCurrentUser = section.tasks.filter(task => 
+                                (task.assignedTo && task.assignedTo.some(assignee => assignee.email === user.email)) || section.isPubliclyViewable
+                            );
+
+                            if (tasksForCurrentUser.length === 0 && !section.isPubliclyViewable) return null; // Skip section if no relevant tasks for shared view
+
+                            return (
+                                <div key={`shared-${section._id}`} className="block mt-8">
+                                    <div className="flex gap-4 justify-center items-center ml-4">
+                                        <h2 className="sm:text-lg font-bold mb-4 min-w-[100px] text-gray-900 dark:text-gray-100">
+                                            {section.name} {section.isPubliclyViewable && <FontAwesomeIcon icon={faEye} className="ml-2 text-blue-500" title="Publicly Viewable"/>}
+                                        </h2>
+                                        <div className="sm:w-[100%] w-[80%] h-0.5 bg-gray-800 dark:bg-gray-700"></div>
+                                        {/* No section menu or create task button in shared view for simplicity, can be added if needed */}
+                                    </div>
+                                    {tasksForCurrentUser.length > 0 ? (
+                                        <TaskCard
+                                            tasks={filterTasks(tasksForCurrentUser, section._id)} // Apply filters to relevant tasks
+                                            handleIsDone={handleTaskIsDone} // Potentially disable or modify for shared tasks
+                                            userId={section.userId} // This might be the section owner's ID
+                                            section={section}
+                                            handleUpdateTask={handleUpdateTask} // Potentially disable or modify
+                                            handleDeleteTask={handleDeleteTask} // Potentially disable or modify
+                                            processingIds={processingIds}
+                                            isSharedView={true} // Add a prop to TaskCard if different behavior is needed
+                                        />
+                                    ) : section.isPubliclyViewable && tasksForCurrentUser.length === 0 ? (
+                                        <p className="text-center text-gray-500 dark:text-gray-400 py-4">This public section has no tasks assigned to you.</p>
+                                    ) : null}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
 
                 {/* Create Task Modal */}
                 {isModalOpen && (
