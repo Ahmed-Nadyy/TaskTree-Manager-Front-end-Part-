@@ -66,23 +66,19 @@ export default function Home() {
         if (!user?.id || !token) return;
         setIsLoadingSharedSections(true);
         try {
-            // This is a placeholder. You'll need a new API endpoint 
-            // or modify an existing one to fetch sections/tasks specifically shared with the user.
-            // For now, let's assume getSections can be adapted or a new function like getSharedData is available.
-            // const sharedData = await getSharedSectionsForUser(user.id, token); // Hypothetical API call
-            // setSharedSections(sharedData);
-            
-            // For demonstration, let's filter existing sections to simulate shared ones
-            // This needs to be replaced with actual API call and logic for shared items
-            const allSections = await getSections(user.id, token); 
-            const filteredShared = allSections.map(section => ({
-                ...section,
-                tasks: section.tasks.filter(task => 
-                    task.assignedTo && task.assignedTo.some(assignee => assignee.email === user.email) || section.isPubliclyViewable
-                )
-            })).filter(section => section.tasks.length > 0 || section.isPubliclyViewable);
+            // Fetch all sections where the user is assigned to at least one task (from other accounts)
+            const allSections = await getSections(user.id, user.email); // Pass email for backend filtering
+            // Only include sections NOT owned by the current user, and only tasks assigned to them
+            const filteredShared = allSections
+                .filter(section => section.userId !== user.id) // Exclude own sections
+                .map(section => ({
+                    ...section,
+                    tasks: section.tasks.filter(task =>
+                        task.assignedTo && task.assignedTo.some(assignee => assignee.email === user.email)
+                    )
+                }))
+                .filter(section => section.tasks.length > 0); // Only sections with assigned tasks
             setSharedSections(filteredShared);
-
         } catch (error) {
             console.error("Error fetching shared sections:", error);
             notifyError(error.message || 'Failed to load shared items.');
@@ -568,7 +564,7 @@ export default function Home() {
                             }
 
                             return (
-                                <div key={section._id} className="block mt-8">
+                                <div key={section._id} className="block mt-8 contianer">
                                     <div className="flex gap-4 justify-center items-center ml-4">
                                         <h2 className="sm:text-lg font-bold mb-4 min-w-[100px] text-gray-900 dark:text-gray-100">
                                             {section.name}

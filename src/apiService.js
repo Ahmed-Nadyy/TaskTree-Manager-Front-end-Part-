@@ -31,10 +31,10 @@ export const loginUser = async (credentials) => {
     return response.data;
 };
 
-export const getSections = async (userId) => {
+export const getSections = async (userId, email) => {
     try {
         const token = localStorage.getItem('authToken');
-        const response = await apiClient.get(`/sections/${userId}`, {
+        const response = await apiClient.get(`/sections/${userId}?email=${encodeURIComponent(email)}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
