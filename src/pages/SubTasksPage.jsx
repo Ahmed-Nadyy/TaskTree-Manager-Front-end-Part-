@@ -116,7 +116,7 @@ const SubTasksPage = () => {
 
         try {
             await updateSubTask(sectionId, taskId, removed._id, { status: newStatus, isDone: newStatus === 'done' });
-            // notification.success({ message: 'Subtask status updated!' });
+            notification.success({ message: 'Subtask status updated!' });
             // Optionally re-fetch or update local state more deeply if needed
         } catch (error) {
             notification.error({ message: 'Failed to update subtask status', description: error.message });
@@ -147,7 +147,7 @@ const SubTasksPage = () => {
             setNewSubTaskDeadline('');
             setNewSubTaskPriority('Medium');
             setSelectedAssignee('');
-            // notification.success({ message: 'Subtask added successfully!' });
+            notification.success({ message: 'Subtask added successfully!' });
             fetchTaskDetails();
         } catch (error) {
             notification.error({ message: 'Failed to add subtask', description: error.message });
@@ -165,7 +165,7 @@ const SubTasksPage = () => {
 
             await updateSubTask(sectionId, taskId, _id, updatedData);
             setEditingSubTask(null); // Close modal
-            // notification.success({ message: 'Subtask updated successfully!' });
+            notification.success({ message: 'Subtask updated successfully!' });
             fetchTaskDetails();
         } catch (error) {
             notification.error({ message: 'Failed to update subtask', description: error.message });
@@ -175,7 +175,7 @@ const SubTasksPage = () => {
     const handleDeleteSubTask = async (subTaskId) => {
         try {
             await deleteSubTask(sectionId, taskId, subTaskId); // Assuming deleteSubTask is imported from apiService
-            // notification.success({ message: 'Subtask deleted successfully!' });
+            notification.success({ message: 'Subtask deleted successfully!' });
             fetchTaskDetails();
         } catch (error) {
             notification.error({ message: 'Failed to delete subtask', description: error.message });

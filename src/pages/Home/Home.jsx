@@ -9,7 +9,9 @@ import Navbar from '../../components/Navbar/Navbar.jsx';
 import { notification } from 'antd';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash, faFaceRollingEyes, faShare } from '@fortawesome/free-solid-svg-icons';
-
+import SectionTreeView from '../../components/TreeView/SectionTreeView';
+import TaskTreeView from '../../components/TreeView/TaskTreeView';
+import { faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 // Add custom animation styles
 const animationStyles = `
   @keyframes pulse-slow {
@@ -47,7 +49,8 @@ export default function Home() {
     });
     const [emailInput, setEmailInput] = useState('');
     const [assignedEmails, setAssignedEmails] = useState([]);
-
+    const [showSectionTreeModal, setShowSectionTreeModal] = useState(false);
+    const [sectionClickedd, setSectionClickedd] = useState(null);
 
     // Add animation styles to document head
     useEffect(() => {
@@ -68,16 +71,33 @@ export default function Home() {
         try {
             // Fetch all sections where the user is assigned to at least one task (from other accounts)
             const allSections = await getSections(user.id, user.email); // Pass email for backend filtering
-            // Only include sections NOT owned by the current user, and only tasks assigned to them
+            // Only include sections NOT owned by the current user
             const filteredShared = allSections
                 .filter(section => section.userId !== user.id) // Exclude own sections
-                .map(section => ({
-                    ...section,
-                    tasks: section.tasks.filter(task =>
+                .map(section => {
+                    // Find tasks where user is directly assigned to the task
+                    const assignedTasks = section.tasks.filter(task =>
                         task.assignedTo && task.assignedTo.some(assignee => assignee.email === user.email)
-                    )
-                }))
-                .filter(section => section.tasks.length > 0); // Only sections with assigned tasks
+                    );
+
+                    // Find tasks where user is assigned to at least one subtask
+                    const tasksWithAssignedSubtasks = section.tasks.filter(task =>
+                        task.subTasks && task.subTasks.some(subtask =>
+                            subtask.assignedTo && subtask.assignedTo.some(assignee => assignee.email === user.email)
+                        )
+                    );
+
+                    // Combine both sets of tasks (removing duplicates)
+                    const combinedTaskIds = new Set([...assignedTasks, ...tasksWithAssignedSubtasks].map(task => task._id));
+                    const allRelevantTasks = section.tasks.filter(task => combinedTaskIds.has(task._id));
+
+                    return {
+                        ...section,
+                        tasks: allRelevantTasks
+                    };
+                })
+                .filter(section => section.tasks.length > 0); // Only sections with relevant tasks
+
             setSharedSections(filteredShared);
         } catch (error) {
             console.error("Error fetching shared sections:", error);
@@ -218,7 +238,7 @@ export default function Home() {
 
             // Fetch data for 'shared' view
             // The fetchSharedSectionsAndTasks function already sets its own loading state
-            await fetchSharedSectionsAndTasks(); 
+            await fetchSharedSectionsAndTasks();
         };
 
         if (isAuthenticated && user?.id) {
@@ -495,224 +515,245 @@ export default function Home() {
             <Navbar currentView={currentView} setCurrentView={setCurrentView} />
             <div className="px-6 min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 pt-4">
 
-            {/* Conditional rendering based on currentView */} 
-            {currentView === 'home' && (
-                <>
+                {/* Conditional rendering based on currentView */}
+                {currentView === 'home' && (
+                    <>
 
-                {(isLoadingSections && currentView === 'home') && (
-                    <div className="flex flex-col items-center justify-center h-screen">
-                        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
-                        <p className="sm:text-2xl text-lg text-gray-700 dark:text-gray-300 mt-4">Loading sections...</p>
-                    </div>
-                )}
-                {!isLoadingSections && currentView === 'home' && sections.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-screen">
-                        <p className="sm:text-2xl text-lg text-gray-700 dark:text-gray-300">You haven't created any sections yet</p>
-                        <button
-                            type="button"
-                            onClick={() => setIsModalSectionOpen(true)}
-                            className="text-white bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 
+                        {(isLoadingSections && currentView === 'home') && (
+                            <div className="flex flex-col items-center justify-center h-screen">
+                                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+                                <p className="sm:text-2xl text-lg text-gray-700 dark:text-gray-300 mt-4">Loading sections...</p>
+                            </div>
+                        )}
+                        {!isLoadingSections && currentView === 'home' && sections.length === 0 && (
+                            <div className="flex flex-col items-center justify-center h-screen">
+                                <p className="sm:text-2xl text-lg text-gray-700 dark:text-gray-300">You haven't created any sections yet</p>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalSectionOpen(true)}
+                                    className="text-white bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 
                                 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700 
                                 font-medium rounded-full text-sm px-6 py-2 mt-4 transition-all duration-200"
-                        >
-                            Create Section
-                        </button>
-                    </div>
-                )}
-                {currentView === 'home' && sections.length > 0 && (
-                    <div className="flex flex-col">
-                        <button
-                            type="button"
-                            onClick={() => setIsModalSectionOpen(true)}
-                            className="text-white fixed sm:top-1/3 top-1/4 right-0 bg-gradient-to-r from-gray-800 to-gray-700 
+                                >
+                                    Create Section
+                                </button>
+                            </div>
+                        )}
+                        {currentView === 'home' && sections.length > 0 && (
+                            <div className="flex flex-col">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalSectionOpen(true)}
+                                    className="text-white fixed sm:top-1/3 top-1/4 right-0 bg-gradient-to-r from-gray-800 to-gray-700 
                                 dark:from-gray-700 dark:to-gray-600 opacity-60 hover:opacity-100 focus:opacity-100 
                                 hover:bg-gray-900 dark:hover:bg-gray-800 focus:outline-none focus:ring-4 
                                 focus:ring-gray-300 dark:focus:ring-gray-600 font-medium rounded-l-full text-sm pl-2 py-3 
                                 mb-4 shadow-sm transition-all duration-300 ease-in-out transform hover:-translate-x-1 
                                 hover:shadow-xl group z-50"
-                            title="Create a new section"
-                        >
-                            <div className="flex items-center justify-center w-8 h-8 group-hover:hidden">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                            </div>
-                            <div className="hidden group-hover:flex flex-col gap-2 relative px-2">
-                                <span className="font-bold">Create</span>
-                                <span className="font-bold">Section</span>
-                                <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-0 group-hover:h-full 
+                                    title="Create a new section"
+                                >
+                                    <div className="flex items-center justify-center w-8 h-8 group-hover:hidden">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                    </div>
+                                    <div className="hidden group-hover:flex flex-col gap-2 relative px-2">
+                                        <span className="font-bold">Create</span>
+                                        <span className="font-bold">Section</span>
+                                        <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-0 group-hover:h-full 
                                     bg-blue-400 dark:bg-blue-500 transition-all duration-300 rounded-full"></div>
-                            </div>
-                            <span className="absolute top-1/2 -translate-y-1/2 right-full mr-2 bg-gray-800 dark:bg-gray-700 
+                                    </div>
+                                    <span className="absolute top-1/2 -translate-y-1/2 right-full mr-2 bg-gray-800 dark:bg-gray-700 
                                 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity 
                                 duration-300 whitespace-nowrap text-xs pointer-events-none">Add new section</span>
-                        </button>
-                        {sections.map((section) => { // This is for 'home' view
+                                </button>
+                                {sections.map((section) => { // This is for 'home' view
 
-                            // Check if any tasks in this section match the current filter criteria
-                            const filteredTasks = filterTasks(section.tasks, section._id);
+                                    // Check if any tasks in this section match the current filter criteria
+                                    const filteredTasks = filterTasks(section.tasks, section._id);
 
-                            // Only render sections that have matching tasks or when no filters are applied
-                            const hasActiveFilters = filterState.section || filterState.status ||
-                                filterState.priority || filterState.dueDateRange.startDate ||
-                                filterState.dueDateRange.endDate || filterState.searchTerm ||
-                                filterState.tags.length > 0;
+                                    // Only render sections that have matching tasks or when no filters are applied
+                                    const hasActiveFilters = filterState.section || filterState.status ||
+                                        filterState.priority || filterState.dueDateRange.startDate ||
+                                        filterState.dueDateRange.endDate || filterState.searchTerm ||
+                                        filterState.tags.length > 0;
 
-                            // If filters are active and no tasks match, don't render this section
-                            if (hasActiveFilters && filteredTasks.length === 0) {
-                                return null;
-                            }
+                                    // If filters are active and no tasks match, don't render this section
+                                    if (hasActiveFilters && filteredTasks.length === 0) {
+                                        return null;
+                                    }
 
-                            return (
-                                <div key={section._id} className="block mt-8 contianer">
-                                    <div className="flex gap-4 justify-center items-center ml-4">
-                                        <h2 className="sm:text-lg font-bold mb-4 min-w-[100px] text-gray-900 dark:text-gray-100">
-                                            {section.name}
-                                        </h2>
-                                        <div className="sm:w-[100%] w-[80%] h-0.5 bg-gray-800 dark:bg-gray-700"></div>
-                                        <div className="relative">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    const newSections = sections.map(s => ({
-                                                        ...s,
-                                                        isMenuOpen: s._id === section._id ? !s.isMenuOpen : false
-                                                    }));
-                                                    setSections(newSections);
-                                                }}
-                                                className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 
-                                                focus:outline-none transition-colors duration-200 p-1"
-                                                aria-label="Section options"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                                </svg>
-                                            </button>
-                                            {section.isMenuOpen && (
-                                                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
-                                                    <ul className="py-1">
-                                                        <li>
-                                                            <button
-                                                                onClick={() => {
-                                                                    dispatch(setSection(section._id));
-                                                                    // Close the menu after selecting
-                                                                    const newSections = sections.map(s => ({
-                                                                        ...s,
-                                                                        isMenuOpen: false
-                                                                    }));
-                                                                    setSections(newSections);
-                                                                    notification.success({
-                                                                        message: 'Filter Applied',
-                                                                        description: `Filtering tasks in "${section.name}" section`,
-                                                                    });
-                                                                }}
-                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                                            >
-                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                                                                </svg>
-                                                                Filter Section
-                                                            </button>
-                                                        </li>
-                                                        <li>
-                                                            <button
-                                                                onClick={() => {
-                                                                    // Close the menu first
-                                                                    const newSections = sections.map(s => ({
-                                                                        ...s,
-                                                                        isMenuOpen: false
-                                                                    }));
-                                                                    setSections(newSections);
-                                                                    // Then delete after a short delay to avoid UI glitches
-                                                                    setTimeout(() => handleDeleteSection(section._id), 100);
-                                                                }}
-                                                                className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                                            >
-                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                </svg>
-                                                                Delete Section
-                                                            </button>
-                                                        </li>
-                                                        {(user?.role === 'team' || user?.role === 'company') && (
-                                                            <li className="border-t border-gray-200 dark:border-gray-700 my-1"></li>
-                                                        )}
-                                                        {(user?.role === 'team' || user?.role === 'company') && (
-                                                        <li>
-                                                            <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 flex items-center justify-between">
-                                                                <span>Publicly Viewable</span>
-                                                                <label htmlFor={`toggle-public-${section._id}`} className="flex items-center cursor-pointer">
-                                                                    <div className="relative">
-                                                                        <input 
-                                                                            type="checkbox" 
-                                                                            id={`toggle-public-${section._id}`} 
-                                                                            className="sr-only" 
-                                                                            checked={section.isPubliclyViewable || false}
-                                                                            onChange={() => handleTogglePublicView(section._id)}
-                                                                            disabled={processingIds.includes(section._id + '-toggle')}
-                                                                        />
-                                                                        <div className={`block w-10 h-6 rounded-full transition-colors ${section.isPubliclyViewable ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
-                                                                        <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${section.isPubliclyViewable ? 'translate-x-full' : ''}`}></div>
-                                                                    </div>
-                                                                </label>
-                                                            </div>
-                                                        </li>
-                                                        )}
-                                                    </ul>
-                                                </div>
+                                    return (
+                                        <div key={section._id} className="block mt-8 contianer">
+                                            {showSectionTreeModal && (
+                                                <SectionTreeView
+                                                    sectionId={sectionClickedd}
+                                                    onClose={() => setShowSectionTreeModal(false)}
+                                                />
                                             )}
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between gap-4 mb-4">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setIsModalOpen(true);
-                                                setSectionClicked(section._id);
-                                            }}
-                                            className="text-white bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 
+                                            <div className="flex gap-4 justify-center items-center ml-4">
+                                                <h2 className="sm:text-lg font-bold mb-4 min-w-[100px] text-gray-900 dark:text-gray-100">
+                                                    {section.name}
+                                                </h2>
+                                                <div className="sm:w-[100%] w-[80%] h-0.5 bg-gray-800 dark:bg-gray-700"></div>
+                                                <div className="relative">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newSections = sections.map(s => ({
+                                                                ...s,
+                                                                isMenuOpen: s._id === section._id ? !s.isMenuOpen : false
+                                                            }));
+                                                            setSections(newSections);
+                                                        }}
+                                                        className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 
+                                                focus:outline-none transition-colors duration-200 p-1"
+                                                        aria-label="Section options"
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                                        </svg>
+                                                    </button>
+                                                    {section.isMenuOpen && (
+                                                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
+                                                            <ul className="py-1">
+                                                                <li>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            dispatch(setSection(section._id));
+                                                                            // Close the menu after selecting
+                                                                            const newSections = sections.map(s => ({
+                                                                                ...s,
+                                                                                isMenuOpen: false
+                                                                            }));
+                                                                            setSections(newSections);
+                                                                            notification.success({
+                                                                                message: 'Filter Applied',
+                                                                                description: `Filtering tasks in "${section.name}" section`,
+                                                                            });
+                                                                        }}
+                                                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                                    >
+                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                                                        </svg>
+                                                                        Filter Section
+                                                                    </button>
+                                                                </li>
+                                                                <li>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            // Close the menu first
+                                                                            const newSections = sections.map(s => ({
+                                                                                ...s,
+                                                                                isMenuOpen: false
+                                                                            }));
+                                                                            setSections(newSections);
+                                                                            // Then delete after a short delay to avoid UI glitches
+                                                                            setTimeout(() => handleDeleteSection(section._id), 100);
+                                                                        }}
+                                                                        className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                                    >
+                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                        </svg>
+                                                                        Delete Section
+                                                                    </button>
+                                                                </li>
+                                                                {(user?.role === 'team' || user?.role === 'company') && (
+                                                                    <li className="border-t border-gray-200 dark:border-gray-700 my-1"></li>
+                                                                )}
+                                                                {(user?.role === 'team' || user?.role === 'company') && (
+                                                                    <li>
+                                                                        <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 flex items-center justify-between">
+                                                                            <span>Publicly Viewable</span>
+                                                                            <label htmlFor={`toggle-public-${section._id}`} className="flex items-center cursor-pointer">
+                                                                                <div className="relative">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        id={`toggle-public-${section._id}`}
+                                                                                        className="sr-only"
+                                                                                        checked={section.isPubliclyViewable || false}
+                                                                                        onChange={() => handleTogglePublicView(section._id)}
+                                                                                        disabled={processingIds.includes(section._id + '-toggle')}
+                                                                                    />
+                                                                                    <div className={`block w-10 h-6 rounded-full transition-colors ${section.isPubliclyViewable ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                                                                                    <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${section.isPubliclyViewable ? 'translate-x-full' : ''}`}></div>
+                                                                                </div>
+                                                                            </label>
+                                                                        </div>
+                                                                    </li>
+                                                                )}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-between gap-4 mb-4">
+                                                <div className="flex space-x-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setIsModalOpen(true);
+                                                            setSectionClicked(section._id);
+                                                        }}
+                                                        className="text-white bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 
                                             focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700 
                                             font-medium rounded-lg text-sm px-6 py-2 transition-colors duration-200"
-                                        >
-                                            Create Task
-                                        </button>
+                                                    >
+                                                        Create Task
+                                                    </button>
 
-                                        {(user?.role === 'team' || user?.role === 'company') && (
-                                            <div className="flex justify-center items-center">
-                                            <button
-                                                onClick={() => handleShareSection(section._id)}
-                                                className="flex items-center gap-2 text-blue-500 hover:text-blue-700 
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setShowSectionTreeModal(true);
+                                                            setSectionClickedd(section._id);
+                                                        }}
+                                                        className="text-white bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 
+                                            focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700 
+                                            font-medium rounded-lg text-sm px-6 py-2 transition-colors duration-200"
+                                                    >
+                                                        Section Tree
+                                                    </button>
+                                                </div>
+
+                                                {(user?.role === 'team' || user?.role === 'company') && (
+                                                    <div className="flex justify-center items-center">
+                                                        <button
+                                                            onClick={() => handleShareSection(section._id)}
+                                                            className="flex items-center gap-2 text-blue-500 hover:text-blue-700 
                                                 focus:outline-none focus:ring-2 focus:ring-blue-300 
                                                 font-medium rounded-lg text-sm px-4 py-2 transition-colors duration-200"
-                                                title="Share Section"
-                                            >
-                                                <FontAwesomeIcon icon={faShare} />
-                                                <span className="hidden sm:inline">Share</span>
-                                            </button>
-                                            {section.isPubliclyViewable ? <span className="text-green-700 font-bold"><FontAwesomeIcon icon={faEye} /></span >:<span className="text-red-700 font-bold"><FontAwesomeIcon icon={faEyeSlash} /></span>}
+                                                            title="Share Section"
+                                                        >
+                                                            <FontAwesomeIcon icon={faShare} />
+                                                            <span className="hidden sm:inline">Share</span>
+                                                        </button>
+                                                        {section.isPubliclyViewable ? <span className="text-green-700 font-bold"><FontAwesomeIcon icon={faEye} /></span > : <span className="text-red-700 font-bold"><FontAwesomeIcon icon={faEyeSlash} /></span>}
 
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
-                                    <TaskCard
-                                        tasks={filteredTasks}
-                                        handleIsDone={handleTaskIsDone}
-                                        userId={section.userId}
-                                        section={section}
-                                        handleUpdateTask={handleUpdateTask}
-                                        handleDeleteTask={handleDeleteTask}
-                                        processingIds={processingIds} // Pass down processing IDs
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
+                                            <TaskCard
+                                                tasks={filteredTasks}
+                                                handleIsDone={handleTaskIsDone}
+                                                userId={section.userId}
+                                                section={section}
+                                                handleUpdateTask={handleUpdateTask}
+                                                handleDeleteTask={handleDeleteTask}
+                                                processingIds={processingIds} // Pass down processing IDs
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </>
                 )}
-                </>
-            )}
 
-                {/* Shared View Content */} 
- 
+                {/* Shared View Content */}
+
                 {currentView === 'shared' && (
                     <div className="flex flex-col">
                         {isLoadingSharedSections && (
@@ -730,7 +771,7 @@ export default function Home() {
                         {!isLoadingSharedSections && sharedSections.length > 0 && sharedSections.map((section) => {
                             const filteredTasks = filterTasks(section.tasks, section._id);
                             // In shared view, we only show tasks assigned to the current user or if the section is public
-                            const tasksForCurrentUser = section.tasks.filter(task => 
+                            const tasksForCurrentUser = section.tasks.filter(task =>
                                 (task.assignedTo && task.assignedTo.some(assignee => assignee.email === user.email)) || section.isPubliclyViewable
                             );
 
@@ -740,7 +781,7 @@ export default function Home() {
                                 <div key={`shared-${section._id}`} className="block mt-8">
                                     <div className="flex gap-4 justify-center items-center ml-4">
                                         <h2 className="sm:text-lg font-bold mb-4 min-w-[100px] text-gray-900 dark:text-gray-100">
-                                            {section.name} {section.isPubliclyViewable && <FontAwesomeIcon icon={faEye} className="ml-2 text-blue-500" title="Publicly Viewable"/>}
+                                            {section.name} {section.isPubliclyViewable && <FontAwesomeIcon icon={faEye} className="ml-2 text-blue-500" title="Publicly Viewable" />}
                                         </h2>
                                         <div className="sm:w-[100%] w-[80%] h-0.5 bg-gray-800 dark:bg-gray-700"></div>
                                         {/* No section menu or create task button in shared view for simplicity, can be added if needed */}
