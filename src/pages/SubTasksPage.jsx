@@ -37,10 +37,17 @@ const SubTasksPage = () => {
                     setSection(currentSection);
                     setTask(currentTask);
                     setAssignableUsers(currentTask.assignedTo.map(u => u.email));
-                    // Show subtasks assigned to the current user OR created by the current user
-                    const subTasks = (currentTask.subTasks || []).filter(st =>
-                        (!st.assignedTo || st.assignedTo.length === 0 || st.assignedTo.some(a => a.email === user.email)) || (st.createdBy && st.createdBy === user.id) // Assuming subtasks have a createdBy field
-                    );
+                    // Filter subtasks based on user role
+                    const subTasks = (currentTask.subTasks || []).filter(st => {
+                        const isSectionOwner = currentSection.userId === user.id;
+                        const isTaskAssignee = currentTask.assignedTo.some(assignee => assignee.email === user.email);
+
+                        if (isSectionOwner || isTaskAssignee) {
+                            return true; // Section owners and task assignees see all subtasks
+                        }
+                        // For other users (including those only assigned to specific subtasks)
+                        return st.assignedTo && st.assignedTo.some(a => a.email === user.email);
+                    });
                     setColumns({
                         pending: {
                             name: 'Pending',
