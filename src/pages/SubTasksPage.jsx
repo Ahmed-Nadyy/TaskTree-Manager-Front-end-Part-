@@ -18,8 +18,8 @@ const SubTasksPage = () => {
     const [newSubTaskPriority, setNewSubTaskPriority] = useState('Medium');
     const [editingSubTask, setEditingSubTask] = useState(null); // For editing
     const [showAddSubTaskModal, setShowAddSubTaskModal] = useState(false);
-    const [assignableUsers, setAssignableUsers] = useState([]);
-    const [selectedAssignee, setSelectedAssignee] = useState('');
+    // const [assignableUsers, setAssignableUsers] = useState([]); // Removed assignableUsers
+    const [selectedAssignee, setSelectedAssignee] = useState(''); // This will now store the email input
     const [showAssigneesModal, setShowAssigneesModal] = useState(false);
     const [currentAssignees, setCurrentAssignees] = useState([]);
 
@@ -36,7 +36,7 @@ const SubTasksPage = () => {
                 if (currentTask) {
                     setSection(currentSection);
                     setTask(currentTask);
-                    setAssignableUsers(currentTask.assignedTo.map(u => u.email));
+                    // setAssignableUsers(currentTask.assignedTo.map(u => u.email)); // Removed this line
                     // Filter subtasks based on user role
                     const subTasks = (currentTask.subTasks || []).filter(st => {
                         const isSectionOwner = currentSection.userId === user.id;
@@ -124,7 +124,7 @@ const SubTasksPage = () => {
 
         try {
             await updateSubTask(sectionId, taskId, removed._id, { status: newStatus, isDone: newStatus === 'done' });
-            notification.success({ message: 'Subtask status updated!' });
+            // notification.success({ message: 'Subtask status updated!' });
             // Optionally re-fetch or update local state more deeply if needed
         } catch (error) {
             notification.error({ message: 'Failed to update subtask status', description: error.message });
@@ -136,6 +136,15 @@ const SubTasksPage = () => {
     const handleAddSubTask = async () => {
         if (!newSubTaskName.trim()) {
             notification.error({ message: 'Subtask name cannot be empty.' });
+            return;
+        }
+        // if (!selectedAssignee.trim()) { // Make assignee mandatory - REMOVED
+        //     notification.error({ message: 'Assignee email cannot be empty.' });
+        //     return;
+        // }
+        // Basic email validation (optional, can be more robust)
+        if (selectedAssignee.trim() && !/\S+@\S+\.\S+/.test(selectedAssignee)) { // Only validate if email is provided
+            notification.error({ message: 'Please enter a valid email address for the assignee.' });
             return;
         }
 
@@ -159,10 +168,14 @@ const SubTasksPage = () => {
                 description: newSubTaskDescription,
                 deadline: newSubTaskDeadline || null,
                 priority: newSubTaskPriority,
+                // assignedTo: [{ email: selectedAssignee }] // Use the email directly - MODIFIED BELOW
             };
-            if (selectedAssignee) {
-                newSubtaskData.assignedTo = [{ email: selectedAssignee }];
+            if (selectedAssignee.trim()) { // Only add assignedTo if email is provided
+                newSubtaskData.assignedTo = [{ email: selectedAssignee.trim() }];
             }
+            // if (selectedAssignee) { // This check is no longer needed as it's mandatory
+            //     newSubtaskData.assignedTo = [{ email: selectedAssignee }];
+            // }
             await addSubTask(sectionId, taskId, newSubtaskData);
             setShowAddSubTaskModal(false);
             setNewSubTaskName('');
@@ -170,7 +183,7 @@ const SubTasksPage = () => {
             setNewSubTaskDeadline('');
             setNewSubTaskPriority('Medium');
             setSelectedAssignee('');
-            notification.success({ message: 'Subtask added successfully!' });
+            // notification.success({ message: 'Subtask added successfully!' });
             fetchTaskDetails();
         } catch (error) {
             notification.error({ message: 'Failed to add subtask', description: error.message });
@@ -203,7 +216,7 @@ const SubTasksPage = () => {
 
             await updateSubTask(sectionId, taskId, _id, updatedData);
             setEditingSubTask(null); // Close modal
-            notification.success({ message: 'Subtask updated successfully!' });
+            // notification.success({ message: 'Subtask updated successfully!' });
             fetchTaskDetails();
         } catch (error) {
             notification.error({ message: 'Failed to update subtask', description: error.message });
@@ -237,7 +250,7 @@ const SubTasksPage = () => {
 
         try {
             await deleteSubTask(sectionId, taskId, subTaskId);
-            notification.success({ message: 'Subtask deleted successfully!' });
+            // notification.success({ message: 'Subtask deleted successfully!' });
             fetchTaskDetails();
         } catch (error) {
             notification.error({ message: 'Failed to delete subtask', description: error.message });
@@ -324,7 +337,7 @@ const SubTasksPage = () => {
                                 <option value="High">High</option>
                             </select>
                             {/* Simplified: Subtasks inherit assignees from parent or are unassigned by default on creation via this UI */}
-                            <select
+                            {/* <select
                                 value={selectedAssignee}
                                 onChange={(e) => setSelectedAssignee(e.target.value)}
                                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md mb-4 dark:bg-gray-700 dark:text-white"
@@ -333,7 +346,15 @@ const SubTasksPage = () => {
                                 {assignableUsers.map(email => (
                                     <option key={email} value={email}>{email}</option>
                                 ))}
-                            </select>
+                            </select> */}
+                            <input 
+                                type="email"
+                                value={selectedAssignee}
+                                onChange={(e) => setSelectedAssignee(e.target.value)}
+                                placeholder="Assignee Email (optional)"
+                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md mb-4 dark:bg-gray-700 dark:text-white"
+                                // required // HTML5 validation - REMOVED
+                            />
                             <div className="flex justify-end space-x-3">
                                 <button onClick={() => setShowAddSubTaskModal(false)} className="px-4 py-2 text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-md">Cancel</button>
                                 <button onClick={handleAddSubTask} className="px-4 py-2 text-white bg-sky-500 hover:bg-sky-600 rounded-md">Add</button>
@@ -419,7 +440,7 @@ const SubTasksPage = () => {
 
                                 <div className="relative">
                                     <label htmlFor="editAssignTo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assign To</label>
-                                    <select
+                                    {/* <select
                                         id="editAssignTo"
                                         value={editingSubTask.assignedTo && editingSubTask.assignedTo.length > 0 ? editingSubTask.assignedTo[0].email : ''}
                                         onChange={(e) => setEditingSubTask({ ...editingSubTask, assignedTo: e.target.value ? [{ email: e.target.value }] : [] })}
@@ -429,7 +450,15 @@ const SubTasksPage = () => {
                                         {assignableUsers.map(email => (
                                             <option key={email} value={email}>{email}</option>
                                         ))}
-                                    </select>
+                                    </select> */}
+                                    <input
+                                        id="editAssignTo"
+                                        type="email"
+                                        value={editingSubTask.assignedTo && editingSubTask.assignedTo.length > 0 ? editingSubTask.assignedTo[0].email : ''}
+                                        onChange={(e) => setEditingSubTask({ ...editingSubTask, assignedTo: e.target.value ? [{ email: e.target.value.trim() }] : [] })}
+                                        placeholder="Assignee Email (optional)"
+                                        className="w-full p-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
+                                    />
                                     <div className="absolute inset-y-0 left-0 pl-3 pt-7 flex items-center pointer-events-none">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
                                     </div>
