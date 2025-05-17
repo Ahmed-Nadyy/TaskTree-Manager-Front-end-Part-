@@ -1,9 +1,11 @@
 import React from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
-import Btn from './Btn'
+import { faMoon, faSun, faSignOutAlt, faUser } from '@fortawesome/free-solid-svg-icons';
+import { useSelector } from 'react-redux';
 
-export default function MobileMenu({currentView,setCurrentView, isMobileMenuOpen, toggleMobileMenu, handleLogout, darkMode, onToggleDarkMode }) {
+export default function MobileMenu({currentView, setCurrentView, isMobileMenuOpen, toggleMobileMenu, handleLogout, darkMode, onToggleDarkMode }) {
+    const { user } = useSelector(state => state.auth);
+    
     return (
         <>
             <div
@@ -28,28 +30,51 @@ export default function MobileMenu({currentView,setCurrentView, isMobileMenuOpen
                         />
                     </button>
                 </div>
-                <div className="p-4 space-y-4">
-                    <div onClick={handleLogout}>
-                        <Btn title="Logout" />
+                
+                {/* User Profile Section */}
+                <div className="p-4 border-b border-gray-700">
+                    <div className="flex items-center space-x-3 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-sky-500 flex items-center justify-center">
+                            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                        </div>
+                        <div>
+                            <p className="font-medium text-white">{user?.name || 'User'}</p>
+                            <p className="text-xs text-gray-400 truncate">{user?.email || 'user@example.com'}</p>
+                        </div>
                     </div>
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md transition-colors duration-200"
+                    >
+                        <FontAwesomeIcon icon={faSignOutAlt} />
+                        <span>Logout</span>
+                    </button>
                 </div>
+                
                 {setCurrentView && (
-                    <div className="flex items-center gap-2 px-8">
+                    <div className="flex flex-col gap-2 p-4">
+                        <h3 className="text-gray-400 text-sm font-medium mb-2">Navigation</h3>
                         <button
-                            onClick={() => setCurrentView('home')}
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-in-out 
-                                                ${currentView === 'home'
-                                    ? 'bg-blue-500 text-white shadow-sm'
-                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                            onClick={() => {
+                                setCurrentView('home');
+                                toggleMobileMenu();
+                            }}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-in-out text-left
+                                ${currentView === 'home'
+                                ? 'bg-blue-500 text-white shadow-sm'
+                                : 'text-white hover:bg-gray-700'}`}
                         >
                             Home
                         </button>
                         <button
-                            onClick={() => setCurrentView('shared')}
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-in-out 
-                                                ${currentView === 'shared'
-                                    ? 'bg-blue-500 text-white shadow-sm'
-                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                            onClick={() => {
+                                setCurrentView('shared');
+                                toggleMobileMenu();
+                            }}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-in-out text-left
+                                ${currentView === 'shared'
+                                ? 'bg-blue-500 text-white shadow-sm'
+                                : 'text-white hover:bg-gray-700'}`}
                         >
                             Shared
                         </button>

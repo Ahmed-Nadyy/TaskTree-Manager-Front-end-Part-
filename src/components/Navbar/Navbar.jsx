@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, toggleDarkMode } from '../../redux/slices/authSlice';
 import NavSearch from './NavSearch';
@@ -8,14 +8,30 @@ import Btn from './Btn';
 import { logoutUser, updateDarkMode } from '../../apiService'; 
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
+import { faMoon, faSun, faSignOutAlt, faUser } from '@fortawesome/free-solid-svg-icons';
 
 export default function Navbar({ currentView, setCurrentView }) {
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+    const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const dispatch = useDispatch();
-    const { darkMode } = useSelector(state => state.auth);
+    const { darkMode, user } = useSelector(state => state.auth);
+    const dropdownRef = useRef(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsProfileDropdownOpen(false);
+            }
+        }
+        
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     const toggleMobileMenu = () => {
         setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -23,6 +39,10 @@ export default function Navbar({ currentView, setCurrentView }) {
 
     const toggleMobileSearch = () => {
         setIsMobileSearchOpen(!isMobileSearchOpen);
+    };
+
+    const toggleProfileDropdown = () => {
+        setIsProfileDropdownOpen(!isProfileDropdownOpen);
     };
 
     const handleDarkModeToggle = async () => {
@@ -38,7 +58,9 @@ export default function Navbar({ currentView, setCurrentView }) {
         } else {
             document.documentElement.classList.remove('dark');
         }
-    };    const handleLogout = async () => {
+    };
+    
+    const handleLogout = async () => {
         try {
             await logoutUser(); 
             dispatch(logout()); 
@@ -48,6 +70,15 @@ export default function Navbar({ currentView, setCurrentView }) {
         } catch (error) {
             console.error('Logout failed:', error);
         }
+    };
+
+    // Get user initials for avatar
+    const getUserInitials = () => {
+        if (!user || !user.name) return 'U';
+        return user.name.split(' ')
+            .map(name => name[0])
+            .join('')
+            .toUpperCase();
     };
 
     return (
@@ -124,8 +155,33 @@ export default function Navbar({ currentView, setCurrentView }) {
                                 />
                             </svg>
                         </button>
-                        <div onClick={handleLogout} className="hidden sm:block">
-                            <Btn title="Logout" onClick={handleLogout} />
+                        
+                        {/* User Profile Circle with Dropdown */}
+                        <div className="relative hidden sm:block" ref={dropdownRef}>
+                            <button 
+                                onClick={toggleProfileDropdown}
+                                className="w-10 h-10 rounded-full bg-sky-500 text-white flex items-center justify-center hover:bg-sky-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
+                                aria-expanded={isProfileDropdownOpen ? 'true' : 'false'}
+                            >
+                                {getUserInitials()}
+                            </button>
+                            
+                            {/* Dropdown Menu */}
+                            {isProfileDropdownOpen && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-700">
+                                    <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700">
+                                        <p className="font-medium">{user?.name || 'User'}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || 'user@example.com'}</p>
+                                    </div>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                    >
+                                        <FontAwesomeIcon icon={faSignOutAlt} className="w-4 h-4" />
+                                        <span>Logout</span>
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                     <MobileSearch 
