@@ -1,39 +1,39 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout, toggleDarkMode } from '../../redux/slices/authSlice';
+import { toggleDarkMode } from '../../redux/slices/authSlice';
 import NavSearch from './NavSearch';
 import MobileSearch from './MobileSearch';
 import MobileMenu from './MobileMenu';
-import Btn from './Btn';
-import { logoutUser, updateDarkMode } from '../../apiService'; 
+import ViewSwitcher from './ViewSwitcher';
+import { updateDarkMode } from '../../apiService'; 
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMoon, faSun, faSignOutAlt, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
+import {
+    faChevronLeft,
+    faChevronRight,
+} from '@fortawesome/free-solid-svg-icons';
+import FilterComponent from './FilterComponent';
 
-export default function Navbar({ currentView, setCurrentView }) {
+export default function Navbar({ currentView, setCurrentView, workspaceName }) {
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-    const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const dispatch = useDispatch();
-    const { darkMode, user } = useSelector(state => state.auth);
-    const dropdownRef = useRef(null);
-
-    // Close dropdown when clicking outside
+    const { darkMode } = useSelector(state => state.auth);
+    const [isMobile, setIsMobile] = useState(false);
+    
+    // Check if device is mobile
     useEffect(() => {
-        function handleClickOutside(event) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsProfileDropdownOpen(false);
-            }
-        }
-        
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
         };
-    }, []);
-
-    const toggleMobileMenu = () => {
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);    const toggleMobileMenu = () => {
         setIsMobileMenuOpen(!isMobileMenuOpen);
     };
 
@@ -41,165 +41,103 @@ export default function Navbar({ currentView, setCurrentView }) {
         setIsMobileSearchOpen(!isMobileSearchOpen);
     };
 
-    const toggleProfileDropdown = () => {
-        setIsProfileDropdownOpen(!isProfileDropdownOpen);
-    };
+    // const handleLogout = async () => {
+    //     try {
+    //         await logoutUser(); 
+    //         dispatch(logout()); 
+    //         localStorage.removeItem('authToken'); 
+    //         localStorage.removeItem('user'); 
+    //         navigate('/');
+    //     } catch (error) {
+    //         console.error('Logout failed:', error);
+    //     }
+    // };
 
     const handleDarkModeToggle = async () => {
         dispatch(toggleDarkMode());
         try {
             await updateDarkMode(!darkMode);
         } catch (error) {
-            console.error('Failed to update dark mode preference:', error);
+            console.error('Error updating dark mode:', error);
         }
-        // Update document class for dark mode
-        if (!darkMode) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    };
-    
-    const handleLogout = async () => {
-        try {
-            await logoutUser(); 
-            dispatch(logout()); 
-            localStorage.removeItem('authToken'); 
-            localStorage.removeItem('user'); 
-            navigate('/');
-        } catch (error) {
-            console.error('Logout failed:', error);
-        }
-    };
-
-    // Get user initials for avatar
-    const getUserInitials = () => {
-        if (!user || !user.name) return 'U';
-        return user.name.split(' ')
-            .map(name => name[0])
-            .join('')
-            .toUpperCase();
     };
 
     return (
-        <>
-            <nav className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-colors duration-200">
-                <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-                    <a href="/dashboard" className="self-center text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-200">
-                        Task Tree
-                    </a>
-                    <div className="flex md:order-2 items-center gap-4">
+        <nav className={`bg-white dark:bg-gray-800 shadow-md`}>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-16">
+                    <div className="flex items-center">
+                    {isMobile && (
+                        <button
+                            className="mr-3 p-2 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline-none"
+                            aria-label="Toggle Sidebar"
+                            onClick={() => document.dispatchEvent(new CustomEvent('toggle-sidebar'))}
+                        >
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                {/* <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /> */}
+                            </svg>
+                        </button>
+                    )}
+                    <div className="flex-shrink-0">
+                        <h1 className="text-xl font-bold text-gray-800 dark:text-white">
+                            {workspaceName}
+                        </h1>
+                    </div>
+                    <div className="ml-8">
+                        <ViewSwitcher currentView={currentView} setCurrentView={setCurrentView} />
+                    </div>
+                </div>
+
+                    <div className="hidden md:block">
+                        <NavSearch currentView={currentView} setCurrentView={setCurrentView} />
+                    </div>
+
+                    <div className="flex items-center">
                         <button
                             onClick={handleDarkModeToggle}
-                            className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 
-                                rounded-lg transition-colors duration-200 relative group"
-                            aria-label="Toggle dark mode"
+                            className="p-2 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline-none"
                         >
-                            <FontAwesomeIcon 
-                                icon={darkMode ? faSun : faMoon} 
-                                className="w-5 h-5 transition-transform duration-200 hover:scale-110" 
-                            />
-                            <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
-                                {darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                            </span>
+                            <FontAwesomeIcon icon={darkMode ? faSun : faMoon} />
                         </button>
-                        <NavSearch 
-                            toggleMobileSearch={toggleMobileSearch} 
-                        />
-                        {/* View Toggle Buttons - Placed before mobile menu button and logout for better desktop layout */}
-                        {setCurrentView && (
-                            <div className="hidden md:flex items-center space-x-1">
-                                <button
-                                    onClick={() => setCurrentView('home')}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-in-out 
-                                                ${currentView === 'home' 
-                                                    ? 'bg-blue-500 text-white shadow-sm'
-                                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                                >
-                                    Home
-                                </button>
-                                <button
-                                    onClick={() => setCurrentView('shared')}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-in-out 
-                                                ${currentView === 'shared' 
-                                                    ? 'bg-blue-500 text-white shadow-sm' 
-                                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                                >
-                                    Shared
-                                </button>
-                            </div>
-                        )}
+                        <div className='md:hidden'>
+                        <FilterComponent />
+                        </div>
+                        <button
+                            onClick={toggleMobileSearch}
+                            className="md:hidden p-2 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline-none"
+                        >
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
 
                         <button
                             onClick={toggleMobileMenu}
-                            type="button"
-                            className="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg 
-                                md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 
-                                dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-                            aria-controls="navbar-search"
-                            aria-expanded={isMobileMenuOpen ? 'true' : 'false'}
+                            className="md:hidden p-2 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline-none"
                         >
-                            <svg
-                                className="w-5 h-5"
-                                aria-hidden="true"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 17 14"
-                            >
-                                <path
-                                    stroke="currentColor"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M1 1h15M1 7h15M1 13h15"
-                                />
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
                         </button>
-                        
-                        {/* User Profile Circle with Dropdown */}
-                        <div className="relative hidden sm:block" ref={dropdownRef}>
-                            <button 
-                                onClick={toggleProfileDropdown}
-                                className="w-10 h-10 rounded-full bg-sky-500 text-white flex items-center justify-center hover:bg-sky-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
-                                aria-expanded={isProfileDropdownOpen ? 'true' : 'false'}
-                            >
-                                {getUserInitials()}
-                            </button>
-                            
-                            {/* Dropdown Menu */}
-                            {isProfileDropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-700">
-                                    <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700">
-                                        <p className="font-medium">{user?.name || 'User'}</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || 'user@example.com'}</p>
-                                    </div>
-                                    <button
-                                        onClick={handleLogout}
-                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                    >
-                                        <FontAwesomeIcon icon={faSignOutAlt} className="w-4 h-4" />
-                                        <span>Logout</span>
-                                    </button>
-                                </div>
-                            )}
-                        </div>
                     </div>
-                    <MobileSearch 
-                        toggleMobileSearch={toggleMobileSearch}
-                        isMobileSearchOpen={isMobileSearchOpen} 
-                    />
                 </div>
-            </nav>
+            </div>
 
-            <MobileMenu
+            {isMobileSearchOpen && (
+                <div className="md:hidden">
+                    <MobileSearch currentView={currentView} setCurrentView={setCurrentView} />
+                </div>
+            )}
+
+            <MobileMenu 
+                currentView={currentView} 
+                setCurrentView={setCurrentView}
                 isMobileMenuOpen={isMobileMenuOpen}
-                toggleMobileMenu={toggleMobileMenu}
-                handleLogout={handleLogout}
+                toggleMobileMenu={() => setIsMobileMenuOpen(false)}
+                handleLogout={() => {}}
                 darkMode={darkMode}
                 onToggleDarkMode={handleDarkModeToggle}
-                currentView={currentView} // Pass to MobileMenu if needed there too
-                setCurrentView={setCurrentView} // Pass to MobileMenu if needed there too
             />
-        </>
+        </nav>
     );
 }

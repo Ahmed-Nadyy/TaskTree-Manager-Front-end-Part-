@@ -9,7 +9,74 @@ const SectionTreeView = ({ sectionId, onClose }) => {
     const [section, setSection] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [expandedTasks, setExpandedTasks] = useState({});
+    const [visualMode, setVisualMode] = useState(false);
     const { user } = useSelector((state) => state.auth);
+
+    const renderVisualTree = () => {
+        if (!section) return null;
+        
+        return (
+            <div className="relative p-4 bg-gray-50 dark:bg-gray-900 rounded-lg overflow-auto">
+                <div className="flex flex-col items-center">
+                    {/* Root Node (Section) */}
+                    <div className="bg-sky-500 text-white p-3 rounded-lg shadow-lg mb-8 w-48 text-center">
+                        {section.name}
+                    </div>
+                    
+                    {/* Tasks Level */}
+                    <div className="grid grid-cols-1 gap-8 w-full">
+                        {section.tasks.map((task, index) => (
+                            <div key={task._id} className="flex flex-col items-center">
+                                {/* Connecting Line */}
+                                <div className="h-8 w-0.5 bg-gray-300 dark:bg-gray-600 -mt-8 mb-0"></div>
+                                
+                                {/* Task Node */}
+                                <div 
+                                    className={`p-3 rounded-lg shadow-md w-40 text-center cursor-pointer
+                                        ${task.isDone ? 'bg-green-500 text-white' : 'bg-white dark:bg-gray-800'}
+                                        hover:shadow-lg transition-shadow`}
+                                    onClick={() => toggleTaskExpand(task._id)}
+                                >
+                                    <div className="font-medium truncate">{task.name}</div>
+                                    <div className="flex items-center justify-center mt-2 space-x-2">
+                                        {renderStatusIcon(task.isDone)}
+                                        {renderPriorityIcon(task.priority)}
+                                        {task.assignedTo?.length > 0 && renderAssignmentIcon(task.assignedTo)}
+                                    </div>
+                                </div>
+                                
+                                {/* Subtasks Level */}
+                                {expandedTasks[task._id] && task.subTasks && task.subTasks.length > 0 && (
+                                    <div className="mt-8">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                            {task.subTasks.map((subtask, subtaskIndex) => (
+                                                <div key={subtask._id} className="flex flex-col items-center">
+                                                    {/* Connecting Line */}
+                                                    <div className="h-8 w-0.5 bg-gray-300 dark:bg-gray-600 -mt-8 mb-0"></div>
+                                                    
+                                                    {/* Subtask Node */}
+                                                    <div 
+                                                        className={`p-2 rounded-lg shadow-md w-32 text-center
+                                                            ${subtask.isDone ? 'bg-green-400 text-white' : 'bg-gray-100 dark:bg-gray-700'}`}
+                                                    >
+                                                        <div className="text-sm font-medium truncate">{subtask.name}</div>
+                                                        <div className="flex items-center justify-center mt-1 space-x-1">
+                                                            {renderStatusIcon(subtask.isDone)}
+                                                            {renderPriorityIcon(subtask.priority)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     // Add animation styles
     useEffect(() => {
@@ -150,10 +217,19 @@ const SectionTreeView = ({ sectionId, onClose }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[80vh] overflow-auto">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold flex items-center">
-                        <FontAwesomeIcon icon={faProjectDiagram} className="mr-2 text-sky-500" />
-                        Section Tree View
-                    </h2>
+                    <div className="flex items-center gap-4">
+                        <h2 className="text-xl font-bold flex items-center">
+                            <FontAwesomeIcon icon={faProjectDiagram} className="mr-2 text-sky-500" />
+                            Tree View
+                        </h2>
+                        <button 
+                            onClick={() => setVisualMode(prev => !prev)}
+                            className="px-3 py-1.5 text-xs bg-sky-500 hover:bg-sky-600 text-white rounded-md flex items-center gap-2 transition-colors"
+                        >
+                            <FontAwesomeIcon icon={faProjectDiagram} className="w-4 h-4" />
+                            {visualMode ? 'List View' : 'Visual Tree'}
+                        </button>
+                    </div>
                     <button 
                         onClick={onClose}
                         className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -164,71 +240,77 @@ const SectionTreeView = ({ sectionId, onClose }) => {
                     </button>
                 </div>
                 
-                <div className="mt-4 pl-4">
-                    {/* Section (Root) */}
-                    <div className="font-bold text-xl mb-2 flex items-center tree-node-enter" style={{animationDelay: '0.1s'}}>
-                        <span className="text-sky-600 dark:text-sky-400">{section.name}</span>
-                    </div>
-                    
-                    {/* Tasks (Branches) */}
-                    <div className="ml-6">
-                        {section.tasks && section.tasks.map((task, taskIndex) => (
-                            <div key={task._id} className="mb-3 tree-line">
-                                <div 
-                                    className="flex items-center cursor-pointer tree-node-enter" 
-                                    style={{animationDelay: `${0.1 + (taskIndex * 0.05)}s`}}
-                                    onClick={() => toggleTaskExpand(task._id)}
-                                >
-                                    <FontAwesomeIcon 
-                                        icon={expandedTasks[task._id] ? faChevronDown : faChevronRight} 
-                                        className="mr-2 text-gray-500 w-3"
-                                    />
-                                    <span className="font-semibold">{task.name}</span>
-                                    <div className="ml-2 flex items-center">
-                                        {renderStatusIcon(task.isDone)}
-                                        {renderPriorityIcon(task.priority)}
-                                        {renderAssignmentIcon(task.assignedTo)}
-                                        {renderDueDateIcon(task.dueDate)}
-                                    </div>
-                                </div>
-                                
-                                {/* Subtasks (Leaves) */}
-                                {expandedTasks[task._id] && task.subTasks && task.subTasks.length > 0 && (
-                                    <div className="ml-6 mt-2">
-                                        {task.subTasks.map((subtask, subtaskIndex) => (
-                                            <div 
-                                                key={subtask._id} 
-                                                className="mb-2 pl-2 py-1 border-l-2 border-gray-200 dark:border-gray-700 tree-node-enter"
-                                                style={{animationDelay: `${0.2 + (subtaskIndex * 0.05)}s`}}
-                                            >
-                                                <div className="flex items-center">
-                                                    <span>{subtask.name}</span>
-                                                    <div className="ml-2 flex items-center">
-                                                        {renderStatusIcon(subtask.isDone)}
-                                                        {renderPriorityIcon(subtask.priority)}
-                                                        {renderAssignmentIcon(subtask.assignedTo)}
-                                                        {renderDueDateIcon(subtask.deadline)}
-                                                    </div>
-                                                </div>
+                <div className="mt-4">
+                    {visualMode ? (
+                        renderVisualTree()
+                    ) : (
+                        <div className="pl-4">
+                            {/* Section (Root) */}
+                            <div className="font-bold text-lg mb-2 flex items-center tree-node-enter" style={{animationDelay: '0.1s'}}>
+                                <span className="text-sky-600 dark:text-sky-400">{section.name}</span>
+                            </div>
+                            
+                            {/* Tasks (Branches) */}
+                            <div className="ml-6">
+                                {section.tasks && section.tasks.map((task, taskIndex) => (
+                                    <div key={task._id} className="mb-3 tree-line">
+                                        <div 
+                                            className="flex items-center cursor-pointer tree-node-enter " 
+                                            style={{animationDelay: `${0.1 + (taskIndex * 0.05)}s`}}
+                                            onClick={() => toggleTaskExpand(task._id)}
+                                        >
+                                            <FontAwesomeIcon 
+                                                icon={expandedTasks[task._id] ? faChevronDown : faChevronRight} 
+                                                className="mr-2 text-gray-500 w-3"
+                                            />
+                                            <span className="font-semibold">{task.name}</span>
+                                            <div className="ml-2 flex items-center">
+                                                {renderStatusIcon(task.isDone)}
+                                                {renderPriorityIcon(task.priority)}
+                                                {renderAssignmentIcon(task.assignedTo)}
+                                                {renderDueDateIcon(task.dueDate)}
                                             </div>
-                                        ))}
+                                        </div>
+                                        
+                                        {/* Subtasks (Leaves) */}
+                                        {expandedTasks[task._id] && task.subTasks && task.subTasks.length > 0 && (
+                                            <div className="ml-6 mt-2">
+                                                {task.subTasks.map((subtask, subtaskIndex) => (
+                                                    <div 
+                                                        key={subtask._id} 
+                                                        className="mb-2 pl-2 py-1 border-l-2 border-gray-200 dark:border-gray-700 tree-node-enter"
+                                                        style={{animationDelay: `${0.2 + (subtaskIndex * 0.05)}s`}}
+                                                    >
+                                                        <div className="flex items-center">
+                                                            <span>{subtask.name}</span>
+                                                            <div className="ml-2 flex items-center">
+                                                                {renderStatusIcon(subtask.isDone)}
+                                                                {renderPriorityIcon(subtask.priority)}
+                                                                {renderAssignmentIcon(subtask.assignedTo)}
+                                                                {renderDueDateIcon(subtask.deadline)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        
+                                        {expandedTasks[task._id] && (!task.subTasks || task.subTasks.length === 0) && (
+                                            <div className="ml-6 mt-2 text-gray-500 italic tree-node-enter">
+                                                No subtasks
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                ))}
                                 
-                                {expandedTasks[task._id] && (!task.subTasks || task.subTasks.length === 0) && (
-                                    <div className="ml-6 mt-2 text-gray-500 italic tree-node-enter">
-                                        No subtasks
+                                {(!section.tasks || section.tasks.length === 0) && (
+                                    <div className="text-gray-500 italic tree-node-enter">
+                                        No tasks in this section
                                     </div>
                                 )}
                             </div>
-                        ))}
-                        
-                        {(!section.tasks || section.tasks.length === 0) && (
-                            <div className="text-gray-500 italic tree-node-enter">
-                                No tasks in this section
-                            </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
                 
                 <div className="flex justify-end mt-6">

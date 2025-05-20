@@ -32,6 +32,7 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
     const getVisibleTasks = () => {
         // On desktop (sm and above), show all tasks
         if (window.innerWidth >= 640) { // 640px is the 'sm' breakpoint in Tailwind
+        
             return tasks;
         }
         // On mobile, show limited tasks based on expanded state
@@ -44,10 +45,9 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
             // Force re-render on resize to update visible tasks
             setVisibleTasks(prev => prev);
         };
-        console.log(tasks);
+
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-
     }, []);
 
     // Reset visible tasks when tasks array changes
@@ -68,7 +68,7 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
 
     const handleEditClick = (e, task) => {
         e.stopPropagation();
-        setEditingTask({
+        setEditingTask({ 
             ...task,
             assignedTo: task.assignedTo ? [...task.assignedTo] : [] // Ensure assignedTo is an array
         });
@@ -152,13 +152,13 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
         <>
             <div className="relative">
                 {/* Task Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                     {getVisibleTasks().map((task) => (
                         <div
                             key={task._id}
                             className={`${task.isDone ? "bg-green-200 dark:bg-green-900" : "bg-white dark:bg-dark-bg"}
                                 shadow-card dark:shadow-dark-card hover:shadow-card-hover dark:hover:shadow-dark-card-hover 
-                                p-3 rounded-xl transition-all duration-300 
+                                p-2 sm:p-3 rounded-xl transition-all duration-300 
                                 ${animatedTasks.includes(task._id) ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}
                                 border-l-4 
                                 ${task.isDone
@@ -168,7 +168,7 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                         : task.priority === "medium"
                                             ? "border-yellow-500"
                                             : "border-blue-300"}
-                                sm:mb-0 mb-4 last:mb-0`}
+                                sm:mb-0 mb-3 last:mb-0`}
                             onMouseEnter={() => setHoveredTaskId(task._id)}
                             onMouseLeave={() => setHoveredTaskId(null)}
                             style={{ transitionDelay: `${tasks.indexOf(task) * 50}ms` }}
@@ -190,30 +190,30 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                             aria-busy={isSubmitting}
                             aria-describedby={`task-description-${task._id}`}
                         >
-                            <div className="flex justify-between items-center mb-3">
-                                <h2 className={`text-xl font-semibold ${task.isDone
+                            <div className="flex justify-between items-center mb-2 sm:mb-3">
+                                <h2 className={`text-base sm:text-xl font-semibold ${task.isDone
                                     ? "text-green-700 dark:text-green-400 line-through"
                                     : "text-gray-800 dark:text-gray-200"
-                                    } group flex items-center`}>
+                                    } group flex items-center truncate max-w-[75%]`}>
                                     {task.priority === "high" && (
                                         <FontAwesomeIcon
                                             icon={faExclamationCircle}
-                                            className="text-red-500 mr-2 animate-pulse"
+                                            className="text-red-500 mr-1 sm:mr-2 animate-pulse"
                                             title="High Priority"
                                         />
                                     )}
-                                    {task.name}
+                                    <span className="truncate">{task.name}</span>
                                     {task.isImportant && (
                                         <FontAwesomeIcon
                                             icon={faStar}
-                                            className="text-yellow-400 ml-2"
+                                            className="text-yellow-400 ml-1 sm:ml-2 flex-shrink-0"
                                             title="Important task"
                                         />
                                     )}
                                 </h2>
-                                <div className="flex items-center space-x-3">
-                                    <div className="flex gap-2">
-                                        <span>done?</span>
+                                <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+                                    <div className="flex gap-1 sm:gap-2 items-center">
+                                        <span className="text-xs sm:text-sm">done?</span>
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -232,18 +232,16 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                             disabled={processingIds.includes(task._id)} // Disable if processing
                                         >
                                             {processingIds.includes(task._id) ? (
-                                                <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                 </svg>
                                             ) : (
-                                                <FontAwesomeIcon icon={task.isDone ? faCheckCircle : faCircle} size="lg" />
+                                                <FontAwesomeIcon icon={task.isDone ? faCheckCircle : faCircle} className="text-base sm:text-lg" />
                                             )}
                                         </button>
-                                    </div>
-
-                                    {/* Only show edit button if user is the owner of the section */}
-                                    {section.userId === user.id && (
+                                    </div>                                    {/* Show edit button if user is the creator of the task or owns the section */}
+                                    {(task.createdBy === user.id || section.userId === user.id) && (
                                         <button
                                             onClick={(e) => handleEditClick(e, task)}
                                             className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:scale-110 transition-all duration-200"
@@ -260,10 +258,8 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                                 <FontAwesomeIcon icon={faPenToSquare} />
                                             )}
                                         </button>
-                                    )}
-
-                                    {/* Only show delete button if user is the owner of the section */}
-                                    {section.userId === user.id && (
+                                    )}                                    {/* Show delete button if user is the creator of the task or owns the section */}
+                                    {(task.createdBy === user.id || section.userId === user.id) && (
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -283,7 +279,6 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                                 </svg>
                                             ) : (
                                                 <FontAwesomeIcon icon={faTrash} />
-
                                             )}
                                         </button>
                                     )}
@@ -291,32 +286,31 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                             </div>
                             <p
                                 id={`task-description-${task._id}`}
-                                className={`text-gray-600 dark:text-gray-400 mb-4 ${task.isDone ? "opacity-70" : ""
-                                    } transition-all duration-200 ${hoveredTaskId === task._id ? "text-gray-800 dark:text-gray-300" : ""
-                                    }`}
+                                className={`text-gray-600 dark:text-gray-400 mb-2 sm:mb-4 text-xs sm:text-sm line-clamp-2 ${task.isDone ? "opacity-70" : ""}
+                                    } transition-all duration-200 ${hoveredTaskId === task._id ? "text-gray-800 dark:text-gray-300" : ""}`}
                             >
                                 {task.description || "No description provided"}
                             </p>
 
                             {/* Task metadata */}
-                            <div className="flex flex-wrap items-center gap-3 mb-4 text-sm">
+                            <div className="flex flex-wrap items-center gap-1 sm:gap-3 mb-2 sm:mb-4 text-xs sm:text-sm">
                                 {task.dueDate && (
                                     <div
-                                        className={`flex items-center px-2 py-1 rounded-lg transition-all duration-300 ${new Date(task.dueDate) < new Date() && !task.isDone
+                                        className={`flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg transition-all duration-300 ${new Date(task.dueDate) < new Date() && !task.isDone
                                             ? 'text-white bg-red-500 font-medium animate-pulse'
                                             : new Date(task.dueDate) < new Date(Date.now() + 86400000 * 2) && !task.isDone
                                                 ? 'text-orange-800 bg-orange-100'
                                                 : 'text-gray-700 bg-gray-100'}`}
                                         title={new Date(task.dueDate) < new Date() && !task.isDone ? "Overdue!" : "Due date"}
                                     >
-                                        <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
+                                        <FontAwesomeIcon icon={faCalendarAlt} className="mr-1 sm:mr-2" />
                                         <span>{new Date(task.dueDate).toLocaleDateString()}</span>
                                     </div>
                                 )}
 
                                 {task.priority && (
                                     <div
-                                        className={`flex items-center px-3 py-1 rounded-lg text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md
+                                        className={`flex items-center px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md
                                             ${task.priority === 'high'
                                                 ? 'bg-red-100 text-red-800 border border-red-200'
                                                 : task.priority === 'medium'
@@ -324,7 +318,7 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                                     : 'bg-blue-100 text-blue-800 border border-blue-200'}`}
                                         title={`Priority: ${task.priority}`}
                                     >
-                                        <FontAwesomeIcon icon={faFlag} className="mr-2" />
+                                        <FontAwesomeIcon icon={faFlag} className="mr-1 sm:mr-2" />
                                         <span className="capitalize">{task.priority || 'Normal'}</span>
                                     </div>
                                 )}
@@ -536,7 +530,7 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                 />
                             </div>
 
-                            {/* Assigned Emails Management - START */}
+                            {/* Assigned Emails Management - START */} 
                             {(userRole === 'team' || userRole === 'company') && (
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -583,7 +577,7 @@ export default function TaskCard({ tasks, handleIsDone, userId, section, handleU
                                     )}
                                 </div>
                             )}
-                            {/* Assigned Emails Management - END */}
+                            {/* Assigned Emails Management - END */} 
 
                             <div className="flex justify-end gap-2">
                                 <button

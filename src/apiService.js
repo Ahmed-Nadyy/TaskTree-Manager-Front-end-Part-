@@ -31,10 +31,14 @@ export const loginUser = async (credentials) => {
     return response.data;
 };
 
-export const getSections = async (userId, email) => {
+export const getSections = async (userId, email, workspaceId) => {
     try {
         const token = localStorage.getItem('authToken');
-        const response = await apiClient.get(`/sections/${userId}?email=${encodeURIComponent(email)}`, {
+        let url = `${API_URL}/sections/${userId}?email=${encodeURIComponent(email)}`;
+        if (workspaceId) {
+            url += `&workspaceId=${workspaceId}`;
+        }
+        const response = await apiClient.get(url, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -49,6 +53,8 @@ export const getSections = async (userId, email) => {
 export const addSection = async (sectionData) => {
     try {
         const token = localStorage.getItem('authToken');
+        // If no workspaceId is provided, it will use the default workspace on the server
+        const { userId, name, workspaceId } = sectionData;
         const response = await apiClient.post('/sections', sectionData, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -331,6 +337,91 @@ export const getSharedSection = async (token) => {
     } catch (error) {
         console.error('Error fetching shared section:', error);
         throw new Error(error.response?.data?.message || 'Failed to fetch shared section. Please try again.');
+    }
+};
+
+// Workspace API Calls
+export const createWorkspace = async (workspaceData) => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.post('/workspaces', workspaceData, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response ? error.response.data : error;
+    }
+};
+
+export const getWorkspaces = async (userId) => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.get(`/workspaces/user/${userId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response ? error.response.data : error;
+    }
+};
+
+export const updateWorkspace = async (workspaceId, updateData) => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.put(`/workspaces/${workspaceId}`, updateData, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response ? error.response.data : error;
+    }
+};
+
+export const deleteWorkspace = async (workspaceId) => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.delete(`/workspaces/${workspaceId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response ? error.response.data : error;
+    }
+};
+
+export const setDefaultWorkspace = async (workspaceId) => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.post(`/workspaces/${workspaceId}/default`, {}, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response ? error.response.data : error;
+    }
+};
+
+export const addSectionToWorkspace = async (workspaceId, sectionId) => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await apiClient.post(`/workspaces/${workspaceId}/sections/${sectionId}`, {}, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response ? error.response.data : error;
     }
 };
 

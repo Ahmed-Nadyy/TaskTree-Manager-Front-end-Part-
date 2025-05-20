@@ -304,37 +304,37 @@ const SubTasksPage = () => {
                     )}
                 </div>
                 {showAddSubTaskModal && (
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex justify-center items-center p-4">
-                        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-lg transform transition-all duration-300 ease-in-out">
-                            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add New Subtask</h2>
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 sm:p-6 w-full max-w-md mx-auto">
+                            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-gray-800 dark:text-white">Add New Subtask</h2>
                             <input 
                                 type="text"
                                 value={newSubTaskName}
                                 onChange={(e) => setNewSubTaskName(e.target.value)}
-                                placeholder="Subtask name"
-                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md mb-4 dark:bg-gray-700 dark:text-white"
+                                placeholder="Subtask Name"
+                                className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm mb-3 sm:mb-4 focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
                             />
                             <textarea
                                 value={newSubTaskDescription}
                                 onChange={(e) => setNewSubTaskDescription(e.target.value)}
                                 placeholder="Description (optional)"
-                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md mb-4 dark:bg-gray-700 dark:text-white"
-                                rows="3"
+                                className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm mb-3 sm:mb-4 focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
+                                rows="2"
                             ></textarea>
                             <input
                                 type="date"
                                 value={newSubTaskDeadline}
                                 onChange={(e) => setNewSubTaskDeadline(e.target.value)}
-                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md mb-4 dark:bg-gray-700 dark:text-white"
+                                className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm mb-3 sm:mb-4 focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
                             />
                             <select
                                 value={newSubTaskPriority}
                                 onChange={(e) => setNewSubTaskPriority(e.target.value)}
-                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md mb-4 dark:bg-gray-700 dark:text-white"
+                                className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm mb-3 sm:mb-4 focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
                             >
-                                <option value="Low">Low</option>
-                                <option value="Medium">Medium</option>
-                                <option value="High">High</option>
+                                <option value="Low">Low Priority</option>
+                                <option value="Medium">Medium Priority</option>
+                                <option value="High">High Priority</option>
                             </select>
                             {/* Simplified: Subtasks inherit assignees from parent or are unassigned by default on creation via this UI */}
                             {/* <select
@@ -352,24 +352,34 @@ const SubTasksPage = () => {
                                 value={selectedAssignee}
                                 onChange={(e) => setSelectedAssignee(e.target.value)}
                                 placeholder="Assignee Email (optional)"
-                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md mb-4 dark:bg-gray-700 dark:text-white"
+                                className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm mb-3 sm:mb-4 focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
                                 // required // HTML5 validation - REMOVED
                             />
-                            <div className="flex justify-end space-x-3">
-                                <button onClick={() => setShowAddSubTaskModal(false)} className="px-4 py-2 text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-md">Cancel</button>
-                                <button onClick={handleAddSubTask} className="px-4 py-2 text-white bg-sky-500 hover:bg-sky-600 rounded-md">Add</button>
+                            <div className="flex justify-end space-x-3 sm:space-x-4 mt-4 sm:mt-6">
+                                <button 
+                                    onClick={() => setShowAddSubTaskModal(false)} 
+                                    className="px-4 sm:px-6 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg shadow-sm transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={handleAddSubTask} 
+                                    className="px-4 sm:px-6 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 rounded-lg shadow-sm transition-colors"
+                                >
+                                    Add Subtask
+                                </button>
                             </div>
                         </div>
                     </div>
                 )}
 
                 {editingSubTask && (
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex justify-center items-center p-4">
-                        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-lg transform transition-all duration-300 ease-in-out">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Edit Subtask</h2>
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 sm:p-6 w-full max-w-md mx-auto">
+                            <div className="flex justify-between items-center mb-4 sm:mb-6">
+                                <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white">Edit Subtask</h2>
                                 <button onClick={() => setEditingSubTask(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
@@ -377,14 +387,14 @@ const SubTasksPage = () => {
 
                             <div className="space-y-4">
                                 <div className="relative">
-                                    <label htmlFor="editSubtaskName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subtask Name</label>
+                                    <label htmlFor="editSubtaskName" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subtask Name</label>
                                     <input
                                         id="editSubtaskName"
                                         type="text"
                                         value={editingSubTask.name}
                                         onChange={(e) => setEditingSubTask({ ...editingSubTask, name: e.target.value })}
                                         placeholder="Enter subtask name"
-                                        className="w-full p-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
+                                        className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
                                     />
                                     <div className="absolute inset-y-0 left-0 pl-3 pt-7 flex items-center pointer-events-none">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2H5a1 1 0 110-2V4zm3 1a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>
@@ -392,14 +402,14 @@ const SubTasksPage = () => {
                                 </div>
 
                                 <div className="relative">
-                                    <label htmlFor="editSubtaskDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (Optional)</label>
+                                    <label htmlFor="editDescription" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (optional)</label>
                                     <textarea
-                                        id="editSubtaskDescription"
-                                        value={editingSubTask.description}
+                                        id="editDescription"
+                                        value={editingSubTask.description || ''}
                                         onChange={(e) => setEditingSubTask({ ...editingSubTask, description: e.target.value })}
-                                        placeholder="Add a detailed description"
-                                        className="w-full p-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
-                                        rows="3"
+                                        placeholder="Enter description"
+                                        className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
+                                        rows="2"
                                     ></textarea>
                                     <div className="absolute top-0 left-0 pl-3 pt-10 flex items-center pointer-events-none">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2H5a1 1 0 110-2V4zm3 1a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>
@@ -408,25 +418,25 @@ const SubTasksPage = () => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="relative">
-                                        <label htmlFor="editSubtaskDeadline" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deadline</label>
-                                        <input
-                                            id="editSubtaskDeadline"
-                                            type="date"
-                                            value={editingSubTask.deadline}
-                                            onChange={(e) => setEditingSubTask({ ...editingSubTask, deadline: e.target.value })}
-                                            className="w-full p-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
-                                        />
+                                    <label htmlFor="editSubtaskDeadline" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deadline</label>
+                                    <input
+                                        id="editSubtaskDeadline"
+                                        type="date"
+                                        value={editingSubTask.deadline}
+                                        onChange={(e) => setEditingSubTask({ ...editingSubTask, deadline: e.target.value })}
+                                        className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
+                                    />
                                         <div className="absolute inset-y-0 left-0 pl-3 pt-7 flex items-center pointer-events-none">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg>
                                         </div>
                                     </div>
                                     <div className="relative">
-                                        <label htmlFor="editSubtaskPriority" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
+                                        <label htmlFor="editSubtaskPriority" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
                                         <select
                                             id="editSubtaskPriority"
                                             value={editingSubTask.priority}
                                             onChange={(e) => setEditingSubTask({ ...editingSubTask, priority: e.target.value })}
-                                            className="w-full p-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
+                                            className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
                                         >
                                             <option value="Low">Low</option>
                                             <option value="Medium">Medium</option>
@@ -439,14 +449,14 @@ const SubTasksPage = () => {
                                 </div>
 
                                 <div className="relative">
-                                    <label htmlFor="editAssignTo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assign To</label>
+                                    <label htmlFor="editAssignTo" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assign To (optional)</label>
                                     {/* <select
                                         id="editAssignTo"
                                         value={editingSubTask.assignedTo && editingSubTask.assignedTo.length > 0 ? editingSubTask.assignedTo[0].email : ''}
                                         onChange={(e) => setEditingSubTask({ ...editingSubTask, assignedTo: e.target.value ? [{ email: e.target.value }] : [] })}
                                         className="w-full p-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
                                     >
-                                        <option value="">Assign to (optional)</option>
+                                        <option value="">Select assignee</option>
                                         {assignableUsers.map(email => (
                                             <option key={email} value={email}>{email}</option>
                                         ))}
@@ -457,7 +467,7 @@ const SubTasksPage = () => {
                                         value={editingSubTask.assignedTo && editingSubTask.assignedTo.length > 0 ? editingSubTask.assignedTo[0].email : ''}
                                         onChange={(e) => setEditingSubTask({ ...editingSubTask, assignedTo: e.target.value ? [{ email: e.target.value.trim() }] : [] })}
                                         placeholder="Assignee Email (optional)"
-                                        className="w-full p-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
+                                        className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
                                     />
                                     <div className="absolute inset-y-0 left-0 pl-3 pt-7 flex items-center pointer-events-none">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
@@ -465,20 +475,20 @@ const SubTasksPage = () => {
                                 </div>
                             </div>
 
-                            <div className="flex justify-between items-center mt-8">
-                                <button onClick={() => handleDeleteSubTask(editingSubTask._id)} className="px-6 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg shadow-sm transition-colors flex items-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="flex justify-between items-center mt-6 sm:mt-8">
+                                <button onClick={() => handleDeleteSubTask(editingSubTask._id)} className="px-4 sm:px-6 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg shadow-sm transition-colors flex items-center space-x-1 sm:space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                     </svg>
                                     <span>Delete</span>
                                 </button>
-                                <div className="flex space-x-4">
-                                    <button onClick={() => setEditingSubTask(null)} className="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg shadow-sm transition-colors">
+                                <div className="flex space-x-2 sm:space-x-4">
+                                    <button onClick={() => setEditingSubTask(null)} className="px-4 sm:px-6 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg shadow-sm transition-colors">
                                         Cancel
                                     </button>
-                                    <button onClick={handleUpdateSubTask} className="px-6 py-2 text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 rounded-lg shadow-sm transition-colors flex items-center space-x-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                                        <span>Save Changes</span>
+                                    <button onClick={handleUpdateSubTask} className="px-4 sm:px-6 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 rounded-lg shadow-sm transition-colors flex items-center space-x-1 sm:space-x-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                                        <span>Save</span>
                                     </button>
                                 </div>
                             </div>
@@ -487,19 +497,19 @@ const SubTasksPage = () => {
                 )}
 
                 <DragDropContext onDragEnd={result => onDragEnd(result, columns, setColumns)}>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6 px-2 sm:px-0">
                         {Object.entries(columns).map(([columnId, column]) => (
                             <Droppable droppableId={columnId} key={columnId}>
                                 {(provided, snapshot) => (
                                     <div
                                         {...provided.droppableProps}
                                         ref={provided.innerRef}
-                                        className={`bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl shadow-md min-h-[200px] 
+                                        className={`bg-gray-50 dark:bg-gray-700/50 p-3 sm:p-4 rounded-xl shadow-md min-h-[200px] 
                                                     ${snapshot.isDraggingOver ? 'bg-sky-100 dark:bg-sky-700' : ''}`}
                                     >
-                                        <div className="flex justify-between items-center mb-4">
-                                            <h2 className="text-lg font-semibold text-sky-600 dark:text-sky-400">{column.name}</h2>
-                                            <span className="text-sm font-medium text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded-full">
+                                        <div className="flex justify-between items-center mb-2 sm:mb-4">
+                                            <h2 className="text-base sm:text-lg font-semibold text-sky-600 dark:text-sky-400">{column.name}</h2>
+                                            <span className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
                                                 {column.items.length}
                                             </span>
                                         </div>
@@ -510,13 +520,13 @@ const SubTasksPage = () => {
                                                         ref={provided.innerRef}
                                                         {...provided.draggableProps}
                                                         {...provided.dragHandleProps}
-                                                        className={`p-4 mb-3 bg-white dark:bg-gray-700 rounded-lg shadow hover:shadow-lg transition-shadow 
+                                                        className={`p-2 sm:p-4 mb-2 sm:mb-3 bg-white dark:bg-gray-700 rounded-lg shadow hover:shadow-lg transition-shadow 
                                                                     border-l-4 ${item.status === 'done' ? 'border-green-500' : item.status === 'in progress' ? 'border-yellow-500' : 'border-gray-400'} 
                                                                     ${snapshot.isDragging ? 'ring-2 ring-sky-500' : ''}`}
                                                     >
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <h3 className="text-gray-800 dark:text-gray-100 font-semibold">{item.name}</h3>
-                                                            <div className="flex space-x-1">
+                                                        <div className="flex justify-between items-start mb-1 sm:mb-2">
+                                                            <h3 className="text-sm sm:text-base text-gray-800 dark:text-gray-100 font-semibold truncate max-w-[75%]">{item.name}</h3>
+                                                            <div className="flex space-x-1 flex-shrink-0">
                                                                 {/* Only show edit/delete buttons if user created the subtask, is assigned to the task, or owns the section */}
                                                                 {((item.createdBy && item.createdBy === user.id) || 
                                                                   (task.assignedTo && task.assignedTo.some(assignee => assignee.email === user.email)) || 
@@ -524,19 +534,19 @@ const SubTasksPage = () => {
                                                                     <>
                                                                         <button 
                                                                             onClick={() => openEditModal(item)} 
-                                                                            className="p-1.5 bg-sky-100 dark:bg-sky-800 text-sky-600 dark:text-sky-300 rounded hover:bg-sky-200 dark:hover:bg-sky-700 transition-colors"
+                                                                            className="p-1 sm:p-1.5 bg-sky-100 dark:bg-sky-800 text-sky-600 dark:text-sky-300 rounded hover:bg-sky-200 dark:hover:bg-sky-700 transition-colors"
                                                                             title="Edit subtask"
                                                                         >
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-3.5 sm:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                                             </svg>
                                                                         </button>
                                                                         <button 
                                                                             onClick={() => handleDeleteSubTask(item._id)} 
-                                                                            className="p-1.5 bg-red-100 dark:bg-red-800 text-red-600 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-700 transition-colors"
+                                                                            className="p-1 sm:p-1.5 bg-red-100 dark:bg-red-800 text-red-600 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-700 transition-colors"
                                                                             title="Delete subtask"
                                                                         >
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-3.5 sm:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                                             </svg>
                                                                         </button>
@@ -545,24 +555,24 @@ const SubTasksPage = () => {
                                                             </div>
                                                         </div>
                                                         {item.description && (
-                                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{item.description}</p>
+                                                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1 sm:mb-2 line-clamp-2">{item.description}</p>
                                                         )}
-                                                        <div className="space-y-2">
-                                                            <div className="flex flex-wrap gap-2 text-xs">
+                                                        <div className="space-y-1 sm:space-y-2">
+                                                            <div className="flex flex-wrap gap-1 sm:gap-2 text-xs">
                                                                 {item.priority && (
-                                                                    <span className={`inline-flex items-center px-2 py-1 rounded-full
+                                                                    <span className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs
                                                                         ${item.priority === 'High' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' :
                                                                         item.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
                                                                         'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'}`}>
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                                                         </svg>
                                                                         {item.priority}
                                                                     </span>
                                                                 )}
                                                                 {item.deadline && (
-                                                                    <span className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full text-[10px] sm:text-xs">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                                         </svg>
                                                                         {new Date(item.deadline).toLocaleDateString()}
@@ -570,11 +580,11 @@ const SubTasksPage = () => {
                                                                 )}
                                                             </div>
                                                             {item.assignedTo && item.assignedTo.length > 0 && (
-                                                                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <div className="flex items-center text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                                     </svg>
-                                                                    {item.assignedTo[0].email}
+                                                                    <span className="truncate max-w-[120px] sm:max-w-none">{item.assignedTo[0].email}</span>
                                                                     {item.assignedTo.length > 1 && (
                                                                         <button 
                                                                             onClick={() => { setCurrentAssignees(item.assignedTo); setShowAssigneesModal(true); }}

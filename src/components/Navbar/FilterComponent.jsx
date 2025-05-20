@@ -40,14 +40,11 @@ export default function FilterComponent() {
                         }
                     });
                     const data = await response.json();
-                    setSections(data);
+                    // Only show sections owned by the current user
+                    setSections(data.filter(section => section.userId === userId));
                 }
             } catch (error) {
                 console.error("Error fetching sections:", error);
-                // notification.error({
-                //     message: 'Error',
-                //     description: 'Failed to load sections for filtering',
-                // });
             }
         };
         
