@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { useSelector } from 'react-redux';
 import { getSections, updateSubTask, addSubTask, deleteSubTask } from '../apiService'; // Assuming addSubTask is available
 import Navbar from '../components/Navbar/Navbar';
 import { notification } from 'antd';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 const SubTasksPage = () => {
     const { sectionId, taskId } = useParams();
+    const navigate = useNavigate();
     const [section, setSection] = useState(null);
     const [task, setTask] = useState(null);
     const [columns, setColumns] = useState(null);
@@ -287,6 +290,13 @@ const SubTasksPage = () => {
         <>
             <Navbar />
             <div className="container mx-auto px-4 py-8">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="mb-4 flex items-center gap-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                >
+                    <FontAwesomeIcon icon={faArrowLeft} />
+                    <span>Back</span>
+                </button>
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Subtasks</h1>
                     {/* Only show Add Subtask button if user is assigned to the task or owns the section */}
