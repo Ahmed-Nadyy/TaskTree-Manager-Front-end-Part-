@@ -93,7 +93,7 @@ const SubTasksPage = () => {
         const sourceItems = [...sourceColumn.items];
         const destItems = [...destColumn.items];
         const [removed] = sourceItems.splice(source.index, 1);
-        
+
         let newStatus = '';
         if (destination.droppableId === 'pending') newStatus = 'pending';
         else if (destination.droppableId === 'inProgress') newStatus = 'in progress';
@@ -153,7 +153,7 @@ const SubTasksPage = () => {
 
         // Check if user has permission to add a subtask
         // Only users assigned to the parent task or who own the section can add subtasks
-        const canAddSubtask = 
+        const canAddSubtask =
             // User is assigned to the task
             (task.assignedTo && task.assignedTo.some(assignee => assignee.email === user.email)) ||
             // User owns the section
@@ -200,7 +200,7 @@ const SubTasksPage = () => {
         }
 
         // Check if user has permission to update this subtask
-        const canUpdateSubtask = 
+        const canUpdateSubtask =
             // User created the subtask
             (editingSubTask.createdBy && editingSubTask.createdBy === user.id) ||
             // User is assigned to the task
@@ -238,7 +238,7 @@ const SubTasksPage = () => {
         }
 
         // Check if user has permission to delete this subtask
-        const canDeleteSubtask = 
+        const canDeleteSubtask =
             // User created the subtask
             (subtask.createdBy && subtask.createdBy === user.id) ||
             // User is assigned to the task
@@ -262,7 +262,7 @@ const SubTasksPage = () => {
 
     const openEditModal = (subTask) => {
         // Check if user has permission to edit this subtask
-        const canEditSubtask = 
+        const canEditSubtask =
             // User created the subtask
             (subTask.createdBy && subTask.createdBy === user.id) ||
             // User is assigned to the task
@@ -300,24 +300,24 @@ const SubTasksPage = () => {
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Subtasks</h1>
                     {/* Only show Add Subtask button if user is assigned to the task or owns the section */}
-                    {((task?.assignedTo && task.assignedTo.some(assignee => assignee.email === user.email)) || 
-                      (section?.userId === user.id)) && (
-                        <button
-                            onClick={() => setShowAddSubTaskModal(true)}
-                            className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg shadow-sm transition-colors flex items-center space-x-2"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            <span>Add Subtask</span>
-                        </button>
-                    )}
+                    {((task?.assignedTo && task.assignedTo.some(assignee => assignee.email === user.email)) ||
+                        (section?.userId === user.id)) && (
+                            <button
+                                onClick={() => setShowAddSubTaskModal(true)}
+                                className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg shadow-sm transition-colors flex items-center space-x-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                <span>Add Subtask</span>
+                            </button>
+                        )}
                 </div>
                 {showAddSubTaskModal && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 sm:p-6 w-full max-w-md mx-auto">
                             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-gray-800 dark:text-white">Add New Subtask</h2>
-                            <input 
+                            <input
                                 type="text"
                                 value={newSubTaskName}
                                 onChange={(e) => setNewSubTaskName(e.target.value)}
@@ -357,23 +357,23 @@ const SubTasksPage = () => {
                                     <option key={email} value={email}>{email}</option>
                                 ))}
                             </select> */}
-                            <input 
+                            <input
                                 type="email"
                                 value={selectedAssignee}
                                 onChange={(e) => setSelectedAssignee(e.target.value)}
                                 placeholder="Assignee Email (optional)"
                                 className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm mb-3 sm:mb-4 focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
-                                // required // HTML5 validation - REMOVED
+                            // required // HTML5 validation - REMOVED
                             />
                             <div className="flex justify-end space-x-3 sm:space-x-4 mt-4 sm:mt-6">
-                                <button 
-                                    onClick={() => setShowAddSubTaskModal(false)} 
+                                <button
+                                    onClick={() => setShowAddSubTaskModal(false)}
                                     className="px-4 sm:px-6 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg shadow-sm transition-colors"
                                 >
                                     Cancel
                                 </button>
-                                <button 
-                                    onClick={handleAddSubTask} 
+                                <button
+                                    onClick={handleAddSubTask}
                                     className="px-4 sm:px-6 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 rounded-lg shadow-sm transition-colors"
                                 >
                                     Add Subtask
@@ -428,14 +428,14 @@ const SubTasksPage = () => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="relative">
-                                    <label htmlFor="editSubtaskDeadline" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deadline</label>
-                                    <input
-                                        id="editSubtaskDeadline"
-                                        type="date"
-                                        value={editingSubTask.deadline}
-                                        onChange={(e) => setEditingSubTask({ ...editingSubTask, deadline: e.target.value })}
-                                        className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
-                                    />
+                                        <label htmlFor="editSubtaskDeadline" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deadline</label>
+                                        <input
+                                            id="editSubtaskDeadline"
+                                            type="date"
+                                            value={editingSubTask.deadline}
+                                            onChange={(e) => setEditingSubTask({ ...editingSubTask, deadline: e.target.value })}
+                                            className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white"
+                                        />
                                         <div className="absolute inset-y-0 left-0 pl-3 pt-7 flex items-center pointer-events-none">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg>
                                         </div>
@@ -538,30 +538,30 @@ const SubTasksPage = () => {
                                                             <h3 className="text-sm sm:text-base text-gray-800 dark:text-gray-100 font-semibold truncate max-w-[75%]">{item.name}</h3>
                                                             <div className="flex space-x-1 flex-shrink-0">
                                                                 {/* Only show edit/delete buttons if user created the subtask, is assigned to the task, or owns the section */}
-                                                                {((item.createdBy && item.createdBy === user.id) || 
-                                                                  (task.assignedTo && task.assignedTo.some(assignee => assignee.email === user.email)) || 
-                                                                  (section.userId === user.id)) && (
-                                                                    <>
-                                                                        <button 
-                                                                            onClick={() => openEditModal(item)} 
-                                                                            className="p-1 sm:p-1.5 bg-sky-100 dark:bg-sky-800 text-sky-600 dark:text-sky-300 rounded hover:bg-sky-200 dark:hover:bg-sky-700 transition-colors"
-                                                                            title="Edit subtask"
-                                                                        >
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-3.5 sm:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                                            </svg>
-                                                                        </button>
-                                                                        <button 
-                                                                            onClick={() => handleDeleteSubTask(item._id)} 
-                                                                            className="p-1 sm:p-1.5 bg-red-100 dark:bg-red-800 text-red-600 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-700 transition-colors"
-                                                                            title="Delete subtask"
-                                                                        >
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-3.5 sm:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                            </svg>
-                                                                        </button>
-                                                                    </>
-                                                                )}
+                                                                {((item.createdBy && item.createdBy === user.id) ||
+                                                                    (task.assignedTo && task.assignedTo.some(assignee => assignee.email === user.email)) ||
+                                                                    (section.userId === user.id)) && (
+                                                                        <>
+                                                                            <button
+                                                                                onClick={() => openEditModal(item)}
+                                                                                className="p-1 sm:p-1.5 bg-sky-100 dark:bg-sky-800 text-sky-600 dark:text-sky-300 rounded hover:bg-sky-200 dark:hover:bg-sky-700 transition-colors"
+                                                                                title="Edit subtask"
+                                                                            >
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-3.5 sm:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                                                </svg>
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleDeleteSubTask(item._id)}
+                                                                                className="p-1 sm:p-1.5 bg-red-100 dark:bg-red-800 text-red-600 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-700 transition-colors"
+                                                                                title="Delete subtask"
+                                                                            >
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-3.5 sm:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                                </svg>
+                                                                            </button>
+                                                                        </>
+                                                                    )}
                                                             </div>
                                                         </div>
                                                         {item.description && (
@@ -572,8 +572,8 @@ const SubTasksPage = () => {
                                                                 {item.priority && (
                                                                     <span className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs
                                                                         ${item.priority === 'High' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' :
-                                                                        item.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
-                                                                        'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'}`}>
+                                                                            item.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
+                                                                                'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'}`}>
                                                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                                                         </svg>
@@ -596,7 +596,7 @@ const SubTasksPage = () => {
                                                                     </svg>
                                                                     <span className="truncate max-w-[120px] sm:max-w-none">{item.assignedTo[0].email}</span>
                                                                     {item.assignedTo.length > 1 && (
-                                                                        <button 
+                                                                        <button
                                                                             onClick={() => { setCurrentAssignees(item.assignedTo); setShowAssigneesModal(true); }}
                                                                             className="ml-1 text-sky-500 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300 font-medium"
                                                                         >
